@@ -70,6 +70,10 @@ main{padding:16px 14px;max-width:860px;margin:0 auto}
 .card h2::before{content:"";width:8px;height:8px;border-radius:3px;background:var(--grad);flex-shrink:0}
 .card .sub2{font-size:.72rem;color:var(--mut);margin:0 0 12px 16px}
 canvas{width:100%;display:block;border-radius:12px;cursor:pointer;background:#0c1322}
+#bigMap{touch-action:none}
+.zbtn{width:34px;height:30px;border-radius:9px;background:var(--card2);border:1px solid var(--line);
+  color:var(--txt);font-size:1rem;font-weight:700;cursor:pointer;line-height:1}
+.zbtn:active{background:var(--acc);color:#04121e}
 
 .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:.72rem;color:var(--mut)}
 .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
@@ -128,6 +132,13 @@ label{font-size:.72rem;color:var(--mut);text-transform:uppercase;letter-spacing:
 .yearhdr{font-size:.78rem;font-weight:800;color:var(--acc);background:linear-gradient(90deg,rgba(56,189,248,.10),transparent);
   margin:14px -16px 4px;padding:7px 16px;letter-spacing:.1em;border-left:3px solid var(--acc)}
 .tr-ico{font-size:.85rem;letter-spacing:2px}
+#updBanner{display:none;position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));z-index:60;
+  background:var(--grad);color:#04121e;border-radius:14px;padding:11px 14px;font-size:.85rem;font-weight:700;
+  align-items:center;gap:10px;box-shadow:0 10px 30px rgba(56,189,248,.35);animation:up .25s ease}
+#updBanner.show{display:flex}
+#updBanner button{margin-left:auto;background:#04121e;color:#eaf1fb;border:0;border-radius:9px;
+  padding:7px 12px;font-size:.78rem;font-weight:700;cursor:pointer}
+#updBanner #updX{cursor:pointer;opacity:.7;font-weight:700}
 .subgrp{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:14px 0 4px;font-weight:700}
 </style>
 </head>
@@ -145,14 +156,22 @@ label{font-size:.72rem;color:var(--mut);text-transform:uppercase;letter-spacing:
   <div class="card"><h2>Continents</h2><p class="sub2">Countries visited out of each continent's total</p><div id="dashContinents"></div></div>
   <div class="card"><h2>Upcoming flights</h2><p class="sub2">Booked and future-dated flights</p><div id="dashUpcoming"></div></div>
   <div class="card"><h2>Flights per year</h2><p class="sub2">How much you flew, year by year</p>
-    <div class="chips" style="margin-bottom:8px"><span class="chip" data-ys="year">By year</span><span class="chip" data-ys="count">Most flights</span></div>
+    <div class="chips" id="yearSortChips" style="margin-bottom:8px;align-items:center">
+      <span style="font-size:.7rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin-right:2px">Sort</span>
+      <span class="chip" data-ys="year">📅 By year</span><span class="chip" data-ys="count">🔢 Most flights</span></div>
     <div id="dashYears"></div></div>
 </section>
 
 <section id="view-map" class="view">
   <div class="card"><h2 id="mapTitle">Countries</h2>
     <canvas id="bigMap" height="420"></canvas>
-    <p class="note" id="mapHint">Tap a country or route for details.</p>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+      <button class="zbtn" data-zoom="out">−</button>
+      <button class="zbtn" data-zoom="in">＋</button>
+      <button class="zbtn" data-zoom="reset" style="width:auto;padding:0 10px">Reset</button>
+      <span id="zoomLbl" style="font-size:.72rem;color:var(--mut)">1.0×</span>
+      <span class="note" style="margin:0 0 0 auto;text-align:right">Scroll or pinch to zoom · drag to pan · tap for details</span>
+    </div>
     <div class="chips" style="margin-top:10px">
       <span class="chip on" id="chipCountries">Countries</span>
       <span class="chip" id="chipRoutes">Flight routes</span>
@@ -203,13 +222,15 @@ label{font-size:.72rem;color:var(--mut);text-transform:uppercase;letter-spacing:
   <button data-v="trips"><span class="ico">🧳</span>Trips</button>
   <button data-v="data"><span class="ico">⚙️</span>Data</button>
 </nav>
+<div id="updBanner"><span>✨ New version available</span><button id="updBtn">Update now</button><span id="updX">✕</span></div>
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
 <script>
 "use strict";
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.1.0";
 const KEY = "volantia_v1";
 const $ = s => document.querySelector(s);
 let S = null, yearFilter = "all", tripFilter = "all", mapMode = "countries", world = null, yearSort = "year";
+let mapZoom = 1, panX = 0, panY = 0;   // big map viewport
 let routeGeom = [];   // for click detection {x1,y1,mx,my,x2,y2,a,b}
 let mapDims = {};     // canvas -> {w,h}
 
@@ -345,10 +366,8 @@ function renderDash(){
   $("#dashUpcoming").innerHTML = up || `<div class="empty">No upcoming flights logged.</div>`;
   const ys = Object.entries(st.years).sort(yearSort==="year" ? (a,b)=>a[0].localeCompare(b[0]) : (a,b)=>b[1]-a[1]);
   const max = Math.max(1,...ys.map(([,v])=>v));
-  document.querySelectorAll("[data-ys]").forEach(c=>{
-    c.classList.toggle("on", c.dataset.ys===yearSort);
-    c.onclick = ()=>{ yearSort = c.dataset.ys; renderDash(); };
-  });
+  document.querySelectorAll("#yearSortChips [data-ys]").forEach(c=>
+    c.classList.toggle("on", c.dataset.ys===yearSort));
   $("#dashYears").innerHTML = ys.map(([y,v])=>
     `<div class="bar"><span class="lbl" style="color:var(--mut)">${y}</span><span class="trk"><span class="fil" style="width:${v/max*100}%"></span></span><span class="val">${v} <small>${v===1?"flight":"flights"}</small></span></div>`).join("");
   $("#hdrTag").textContent = st.past.length ? `${g.been.length} countries · ${fmt(st.km)} km` : "";
@@ -834,6 +853,9 @@ async function drawMap(canvas, mode){
   mapDims[canvas.id] = {w,h};
   const ctx = canvas.getContext("2d"); ctx.scale(dpr,dpr);
   ctx.clearRect(0,0,w,h);
+  const zoomable = canvas.id==="bigMap";
+  const Z = zoomable ? mapZoom : 1, PX = zoomable ? panX : 0, PY = zoomable ? panY : 0;
+  if(zoomable){ clampPan(w,h); ctx.save(); ctx.translate(panX,panY); ctx.scale(mapZoom,mapZoom); }
   const {ids,names} = visitedIds();
   // countries whose atlas geometry includes overseas territories: highlight mainland box only
   const MAINLAND = {"250":[-6,41,10,52.5],"528":[3,50,8,54],"208":[7,54,16,58]}; // FR, NL, DK
@@ -862,18 +884,18 @@ async function drawMap(canvas, mode){
       poly.forEach(drawRing);
       if(mode==="countries" && eff==="want"){
         ctx.fillStyle = "rgba(167,139,250,.16)"; ctx.fill();
-        ctx.strokeStyle = "#a78bfa"; ctx.lineWidth = 1; ctx.stroke();
+        ctx.strokeStyle = "#a78bfa"; ctx.lineWidth = 1/Z; ctx.stroke();
       } else {
         ctx.fillStyle = mode==="countries" ? (MAP_FILL[eff]||MAP_FILL.none) : MAP_FILL.none;
         ctx.fill();
-        ctx.strokeStyle = "#0b1018"; ctx.lineWidth = .5; ctx.stroke();
+        ctx.strokeStyle = "#0b1018"; ctx.lineWidth = .5/Z; ctx.stroke();
       }
     });
   });
   if(mode==="routes"){
     routeGeom = [];
     const done = new Set();
-    ctx.strokeStyle="rgba(56,189,248,.55)"; ctx.lineWidth=1.2;
+    ctx.strokeStyle="rgba(56,189,248,.55)"; ctx.lineWidth=1.2/Z;
     S.flights.forEach(f=>{
       const A=airportOf(f.from.icao), B=airportOf(f.to.icao);
       if(!A||!B) return;
@@ -888,23 +910,45 @@ async function drawMap(canvas, mode){
     const aps=new Set(); S.flights.forEach(f=>{aps.add(f.from.icao);aps.add(f.to.icao);});
     aps.forEach(ic=>{ const a=airportOf(ic); if(!a) return;
       const [x,y]=project(a.lon,a.lat,w,h);
-      ctx.beginPath(); ctx.arc(x,y,2.3,0,7); ctx.fill(); });
+      ctx.beginPath(); ctx.arc(x,y,2.3/Z,0,7); ctx.fill(); });
   }
+  if(zoomable){ ctx.restore(); const z=$("#zoomLbl"); if(z) z.textContent = mapZoom.toFixed(1)+"×"; }
 }
+
+/* pan/zoom helpers */
+function mapSize(){ const c=$("#bigMap"); const d=mapDims.bigMap; return d||{w:c?.clientWidth||600,h:340}; }
+function clampPan(w,h){
+  const minX = w - w*mapZoom, minY = h - h*mapZoom;
+  panX = Math.min(0, Math.max(minX, panX));
+  panY = Math.min(0, Math.max(minY, panY));
+}
+function zoomAt(sx, sy, factor){
+  const {w,h} = mapSize();
+  const nz = Math.max(1, Math.min(8, mapZoom*factor));
+  if(nz === mapZoom) return;
+  // keep the point under the cursor fixed
+  panX = sx - (sx - panX) * (nz/mapZoom);
+  panY = sy - (sy - panY) * (nz/mapZoom);
+  mapZoom = nz;
+  clampPan(w,h);
+  drawMap($("#bigMap"), mapMode);
+}
+function resetZoom(){ mapZoom=1; panX=0; panY=0; drawMap($("#bigMap"), mapMode); }
 function qBezier(p,t){ // point on quadratic bezier
   const u=1-t;
   return [u*u*p.x1+2*u*t*p.mx+t*t*p.x2, u*u*p.y1+2*u*t*p.my+t*t*p.y2];
 }
 function mapClick(e, canvas){
   const rect = canvas.getBoundingClientRect();
-  const x = e.clientX-rect.left, y = e.clientY-rect.top;
+  let x = e.clientX-rect.left, y = e.clientY-rect.top;
   const {w,h} = mapDims[canvas.id]||{w:rect.width,h:rect.height};
+  if(canvas.id==="bigMap"){ x = (x-panX)/mapZoom; y = (y-panY)/mapZoom; }
   if(mapMode==="routes" && canvas.id==="bigMap"){
     let best=null, bd=14;
     routeGeom.forEach(p=>{
       for(let t=0;t<=1;t+=0.05){
         const [px,py]=qBezier(p,t), d=Math.hypot(px-x,py-y);
-        if(d<bd){ bd=d; best=p; }
+        if(d<bd/mapZoom){ bd=d*mapZoom; best=p; }
       }
     });
     if(best){ openRouteSheet(best.a, best.b); return; }
@@ -927,10 +971,98 @@ function mapClick(e, canvas){
   else openSheet(`<h3>${esc(hit.name)}</h3><p class="note">Not visited yet — add it to your wishlist from the Trips tab.</p>
     <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
 }
-$("#bigMap").onclick = e=> mapClick(e, $("#bigMap"));
+(function bindMapGestures(){
+  const cv = $("#bigMap");
+  let down=null, moved=0, pinch=null;
+  cv.addEventListener("wheel", e=>{ e.preventDefault();
+    const r=cv.getBoundingClientRect();
+    zoomAt(e.clientX-r.left, e.clientY-r.top, e.deltaY<0?1.18:1/1.18);
+  }, {passive:false});
+  cv.addEventListener("pointerdown", e=>{
+    if(e.pointerType==="touch" && pinch) return;
+    down={x:e.clientX,y:e.clientY,px:panX,py:panY}; moved=0;
+    cv.setPointerCapture?.(e.pointerId);
+  });
+  cv.addEventListener("pointermove", e=>{
+    if(!down || pinch) return;
+    const dx=e.clientX-down.x, dy=e.clientY-down.y;
+    moved=Math.max(moved, Math.hypot(dx,dy));
+    if(mapZoom>1 && moved>3){
+      const {w,h}=mapSize();
+      panX=down.px+dx; panY=down.py+dy; clampPan(w,h);
+      drawMap(cv, mapMode);
+    }
+  });
+  cv.addEventListener("pointerup", e=>{
+    const wasDrag = moved>6;
+    down=null;
+    if(!wasDrag) mapClick(e, cv);
+  });
+  cv.addEventListener("pointercancel", ()=>{ down=null; });
+  cv.addEventListener("touchstart", e=>{
+    if(e.touches.length===2){
+      const [a,b]=e.touches;
+      pinch={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)};
+      down=null;
+    }
+  }, {passive:true});
+  cv.addEventListener("touchmove", e=>{
+    if(e.touches.length===2 && pinch){
+      e.preventDefault();
+      const [a,b]=e.touches, r=cv.getBoundingClientRect();
+      const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+      const mx=(a.clientX+b.clientX)/2-r.left, my=(a.clientY+b.clientY)/2-r.top;
+      if(pinch.d>0) zoomAt(mx,my,d/pinch.d);
+      pinch.d=d;
+    }
+  }, {passive:false});
+  cv.addEventListener("touchend", e=>{ if(e.touches.length<2) pinch=null; });
+  cv.addEventListener("dblclick", e=>{ const r=cv.getBoundingClientRect();
+    zoomAt(e.clientX-r.left, e.clientY-r.top, 1.8); });
+  document.addEventListener("click", e=>{
+    const b=e.target.closest?.("[data-zoom]"); if(!b) return;
+    const {w,h}=mapSize();
+    if(b.dataset.zoom==="reset") resetZoom(); else zoomAt(w/2,h/2, b.dataset.zoom==="in"?1.5:1/1.5);
+  });
+})();
 $("#miniMap").onclick = ()=> document.querySelector('nav button[data-v="map"]').click();
 $("#chipCountries").onclick=()=>{ mapMode="countries"; renderMapView(); };
 $("#chipRoutes").onclick=()=>{ mapMode="routes"; renderMapView(); };
+
+document.addEventListener("click", e=>{
+  const c = e.target.closest?.("#yearSortChips [data-ys]");
+  if(!c) return;
+  yearSort = c.dataset.ys;
+  renderDash();
+}, true);
+
+/* ---------- self-update banner ---------- */
+let updSeen = null;
+async function checkAppUpdate(){
+  if(!location.protocol.startsWith("http")) return;      // file:// has nothing to check
+  try{
+    const res = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
+    if(!res.ok) return;
+    const txt = await res.text();
+    if(!txt.trimEnd().endsWith("<!--VOLANTIA-EOF-->")) return;   // truncated deploy — ignore
+    const m = txt.match(/APP_VERSION\s*=\s*"([^"]+)"/);
+    if(!m) return;
+    const v = m[1];
+    if(v !== APP_VERSION && v !== updSeen){
+      updSeen = v;
+      $("#updBanner").querySelector("span").textContent = `✨ Volantia v${v} is available`;
+      $("#updBanner").classList.add("show");
+    }
+  }catch(e){}
+}
+$("#updBtn").onclick = ()=>{
+  if("serviceWorker" in navigator)
+    navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.update()));
+  if(window.caches) caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)))
+    .then(()=>location.replace(location.pathname + "?v=" + Date.now()));
+  else location.replace(location.pathname + "?v=" + Date.now());
+};
+$("#updX").onclick = ()=> $("#updBanner").classList.remove("show");
 
 /* ---------- nav & init ---------- */
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
@@ -958,6 +1090,8 @@ if(!S){ S = blank(); document.querySelector('nav button[data-v="data"]').click()
 renderAll();
 if("serviceWorker" in navigator && location.protocol.startsWith("http"))
   navigator.serviceWorker.register("sw.js");
+checkAppUpdate();
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) checkAppUpdate(); });
 </script>
 </body>
 </html>
