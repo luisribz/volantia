@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Volantia</title>
+<meta name="description" content="Volantia — your travels and flights, in one place.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Volantia">
+<meta name="theme-color" content="#0b1018">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{
+  --bg:#0a0f1a; --card:#101827; --card2:#1a2438; --line:#233150;
+  --txt:#eaf1fb; --mut:#8fa3bf; --acc:#38bdf8; --acc2:#f59e0b; --ok:#34d399;
+  --bad:#f87171; --vio:#a78bfa; --pink:#f472b6; --r:16px;
+  --grad:linear-gradient(90deg,#38bdf8,#6366f1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding-bottom:calc(70px + env(safe-area-inset-bottom));min-height:100vh;
+  background-image:radial-gradient(900px 500px at 85% -10%,rgba(99,102,241,.14),transparent 60%),
+                   radial-gradient(700px 420px at -10% 30%,rgba(56,189,248,.10),transparent 60%);
+  background-attachment:fixed}
+header{position:sticky;top:0;z-index:20;background:rgba(10,15,26,.86);backdrop-filter:blur(14px);
+  padding:calc(12px + env(safe-area-inset-top)) 18px 12px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px}
+header h1{font-size:1.2rem;letter-spacing:.12em;font-weight:800}
+header h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+header .tag{margin-left:auto;font-size:.7rem;color:var(--mut)}
+main{padding:16px 14px;max-width:860px;margin:0 auto}
+.view{display:none}
+.view.active{display:block;animation:fade .22s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+
+.hero{background:linear-gradient(135deg,#0284c7 0%,#4f46e5 60%,#7c3aed 100%);
+  border-radius:20px;padding:20px 18px;margin-bottom:14px;box-shadow:0 12px 34px rgba(37,99,235,.28);
+  position:relative;overflow:hidden}
+.hero::after{content:"✈";position:absolute;right:-6px;top:-24px;font-size:7rem;opacity:.12;transform:rotate(12deg)}
+.h-top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.h-num{font-size:3.2rem;font-weight:800;line-height:1}
+.h-lbl{font-size:.9rem;line-height:1.15;opacity:.92}
+.h-pct{margin-left:auto;font-size:1.6rem;font-weight:700}
+.h-pct small{font-size:.75rem;font-weight:400;opacity:.85;display:block;text-align:right}
+.h-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.hchip{background:rgba(255,255,255,.16);backdrop-filter:blur(4px);border-radius:999px;
+  padding:5px 12px;font-size:.76rem;font-weight:600}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;
+  border-top:2px solid var(--acc);box-shadow:0 4px 18px rgba(0,0,0,.25);position:relative}
+.kpi .ico{position:absolute;top:10px;right:12px;font-size:1.05rem;opacity:.8}
+.kpi.k2{border-top-color:var(--acc2)} .kpi.k3{border-top-color:var(--ok)}
+.kpi.k4{border-top-color:var(--vio)} .kpi.k5{border-top-color:var(--pink)}
+.kpi b{display:block;font-size:1.5rem;font-weight:800;margin-top:2px}
+.kpi small{color:var(--mut);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em}
+.kpi .sub{font-size:.72rem;color:var(--acc);margin-top:2px}
+.kpi.k2 .sub{color:var(--acc2)} .kpi.k3 .sub{color:var(--ok)} .kpi.k4 .sub{color:var(--vio)} .kpi.k5 .sub{color:var(--pink)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px;
+  box-shadow:0 4px 18px rgba(0,0,0,.25)}
+.card h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.09em;color:var(--txt);
+  margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.card h2::before{content:"";width:8px;height:8px;border-radius:3px;background:var(--grad);flex-shrink:0}
+.card .sub2{font-size:.72rem;color:var(--mut);margin:0 0 12px 16px}
+canvas{width:100%;display:block;border-radius:12px;cursor:pointer;background:#0c1322}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:.72rem;color:var(--mut)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+.row{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid rgba(35,49,80,.55);font-size:.88rem}
+.row:last-child{border-bottom:0}
+.row.click{cursor:pointer;border-radius:8px} .row.click:active{background:var(--card2)}
+.row .date{color:var(--mut);font-size:.74rem;min-width:74px;font-variant-numeric:tabular-nums}
+.row .route{font-weight:700}
+.row .meta{margin-left:auto;text-align:right;color:var(--mut);font-size:.74rem;flex-shrink:0}
+.fl{width:22px;height:auto;border-radius:3px;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,.10)}
+.fl.big{width:34px}
+.badge{font-size:.62rem;padding:2px 7px;border-radius:6px;background:var(--card2);border:1px solid var(--line);color:var(--acc2);font-weight:600}
+.badge.future{color:var(--ok)} .badge.lived{color:#04121e;background:var(--ok);border-color:var(--ok)}
+.badge.want{color:#0a0f1a;background:var(--vio);border-color:var(--vio)} .badge.cab{color:var(--vio)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.chip{padding:6px 13px;border-radius:999px;background:var(--card);border:1px solid var(--line);
+  color:var(--mut);font-size:.78rem;cursor:pointer;user-select:none;transition:all .15s}
+.chip.on{background:var(--grad);color:#04121e;border-color:transparent;font-weight:700;
+  box-shadow:0 3px 12px rgba(56,189,248,.35)}
+
+.bar{display:flex;align-items:center;gap:10px;font-size:.78rem;margin:7px 0}
+.bar .lbl{min-width:92px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .trk{display:block;flex:1;height:13px;background:var(--card2);border-radius:7px;overflow:hidden}
+.bar .fil{display:block;height:100%;border-radius:7px;background:var(--grad);min-width:3px}
+.bar .val{min-width:52px;text-align:right;color:var(--txt);font-weight:700;font-variant-numeric:tabular-nums}
+.bar .val small{color:var(--mut);font-weight:400}
+
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;background:rgba(10,15,26,.92);
+  backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+nav button{flex:1;background:none;border:0;color:var(--mut);font-size:.62rem;padding:7px 0 5px;cursor:pointer;
+  border-radius:12px;margin:0 2px;transition:all .15s}
+nav button .ico{font-size:1.22rem;display:block;margin-bottom:2px}
+nav button.on{color:var(--acc);background:rgba(56,189,248,.12)}
+
+button.btn{background:var(--grad);color:#04121e;border:0;border-radius:12px;padding:12px 16px;
+  font-size:.9rem;font-weight:800;cursor:pointer;width:100%;box-shadow:0 4px 16px rgba(56,189,248,.3)}
+button.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line);box-shadow:none}
+button.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--bad);box-shadow:none}
+.stack{display:flex;flex-direction:column;gap:10px}
+input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;
+  color:var(--txt);padding:10px 12px;font-size:.9rem;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc)}
+label{font-size:.72rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal{position:fixed;inset:0;background:rgba(2,6,14,.68);z-index:50;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
+.modal.open{display:flex}
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom));
+  width:100%;max-width:640px;max-height:88vh;overflow-y:auto;animation:up .22s ease}
+@keyframes up{from{transform:translateY(30px);opacity:.5}to{transform:none;opacity:1}}
+.sheet h3{margin-bottom:12px;font-size:1.05rem;display:flex;align-items:center;gap:10px}
+.empty{color:var(--mut);text-align:center;padding:28px 10px;font-size:.85rem;line-height:1.5}
+.note{font-size:.72rem;color:var(--mut);line-height:1.5;margin-top:8px}
+.split{display:flex;gap:10px}
+.split>*{flex:1}
+.yearhdr{font-size:.78rem;font-weight:800;color:var(--acc);background:linear-gradient(90deg,rgba(56,189,248,.10),transparent);
+  margin:14px -16px 4px;padding:7px 16px;letter-spacing:.1em;border-left:3px solid var(--acc)}
+.tr-ico{font-size:.85rem;letter-spacing:2px}
+.subgrp{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:14px 0 4px;font-weight:700}
+</style>
+</head>
+<body>
+<header><img src="logo-64.png" alt="Volantia" style="width:30px;height:30px;border-radius:8px;box-shadow:0 0 12px rgba(99,102,241,.5)"><h1>VOLANT<span>IA</span></h1><span class="tag" id="hdrTag"></span></header>
+<main>
+
+<section id="view-dash" class="view active">
+  <div id="dashHero"></div>
+  <div class="kpis" id="dashKpis"></div>
+  <div class="card"><h2>World map</h2><p class="sub2">Tap to explore countries and routes</p><canvas id="miniMap" height="300"></canvas>
+    <div class="legend"><span><i style="background:#2f7fb8"></i>Visited</span>
+      <span><i style="background:#2fa47a"></i>Lived</span>
+      <span><i style="background:rgba(167,139,250,.45);border:1px solid #a78bfa"></i>Wishlist</span></div></div>
+  <div class="card"><h2>Continents</h2><p class="sub2">Countries visited out of each continent's total</p><div id="dashContinents"></div></div>
+  <div class="card"><h2>Upcoming flights</h2><p class="sub2">Booked and future-dated flights</p><div id="dashUpcoming"></div></div>
+  <div class="card"><h2>Flights per year</h2><p class="sub2">How much you flew, year by year</p>
+    <div class="chips" style="margin-bottom:8px"><span class="chip" data-ys="year">By year</span><span class="chip" data-ys="count">Most flights</span></div>
+    <div id="dashYears"></div></div>
+</section>
+
+<section id="view-map" class="view">
+  <div class="card"><h2 id="mapTitle">Countries</h2>
+    <canvas id="bigMap" height="420"></canvas>
+    <p class="note" id="mapHint">Tap a country or route for details.</p>
+    <div class="chips" style="margin-top:10px">
+      <span class="chip on" id="chipCountries">Countries</span>
+      <span class="chip" id="chipRoutes">Flight routes</span>
+    </div>
+  </div>
+  <div class="card clist"><h2 id="clistTitle">List</h2><div id="countryList"></div></div>
+</section>
+
+<section id="view-flights" class="view">
+  <button class="btn" id="btnAddFlight" style="margin-bottom:14px">＋ Add flight</button>
+  <div class="kpis" id="flightKpis"></div>
+  <div class="card"><h2>Top routes</h2><p class="sub2">Your most flown city pairs (number of flights)</p><div id="topRoutes"></div></div>
+  <div class="card"><h2>Top airlines</h2><p class="sub2">Airlines you've flown the most</p><div id="topAirlines"></div></div>
+  <div class="card"><h2>Cabin & aircraft</h2><p class="sub2">What you flew in, and on what</p><div id="miscStats"></div></div>
+  <div class="card"><h2>Airports</h2><p class="sub2">Every airport you've passed through — tap one for its flights</p><div id="airportStats"></div></div>
+  <div class="chips" id="yearChips"></div>
+  <div class="card"><h2 id="flightListTitle">Flights</h2><div id="flightList"></div></div>
+</section>
+
+<section id="view-trips" class="view">
+  <button class="btn" id="btnAddTrip" style="margin-bottom:14px">＋ Add trip</button>
+  <div class="chips">
+    <span class="chip on" data-tf="all">All</span>
+    <span class="chip" data-tf="visit">Visits</span>
+    <span class="chip" data-tf="lived">Lived</span>
+    <span class="chip" data-tf="want">Wishlist</span>
+  </div>
+  <div class="card"><h2>Timeline</h2><div id="tripList"></div></div>
+</section>
+
+<section id="view-data" class="view">
+  <div class="card"><h2>Your data</h2><div id="dataInfo"></div></div>
+  <div class="card stack"><h2>Import / Export</h2>
+    <input type="file" id="fileImport" accept=".json" hidden>
+    <button class="btn" id="btnImport">Import data (seed or backup)</button>
+    <button class="btn ghost" id="btnExport">Export backup JSON</button>
+    <p class="note">First time here? Import <b>data/volantia-seed.json</b>. Everything lives on this device — export a backup regularly. Imports merge, so your manual entries are kept.</p>
+    <button class="btn danger" id="btnWipe">Erase all data on this device</button>
+  </div>
+</section>
+
+</main>
+<nav id="nav">
+  <button data-v="dash" class="on"><span class="ico">🏠</span>Home</button>
+  <button data-v="map"><span class="ico">🗺️</span>Map</button>
+  <button data-v="flights"><span class="ico">✈️</span>Flights</button>
+  <button data-v="trips"><span class="ico">🧳</span>Trips</button>
+  <button data-v="data"><span class="ico">⚙️</span>Data</button>
+</nav>
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<script>
+"use strict";
+const APP_VERSION = "1.0.0";
+const KEY = "volantia_v1";
+const $ = s => document.querySelector(s);
+let S = null, yearFilter = "all", tripFilter = "all", mapMode = "countries", world = null, yearSort = "year";
+let routeGeom = [];   // for click detection {x1,y1,mx,my,x2,y2,a,b}
+let mapDims = {};     // canvas -> {w,h}
+
+/* ---------- state ---------- */
+function load(){ try{ S = JSON.parse(localStorage.getItem(KEY)); }catch(e){ S = null; } }
+function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+function blank(){ return {app:"volantia", version:1, countries:[], trips:[], flights:[], airports:{}}; }
+
+/* ---------- utils ---------- */
+const fmt = n => (n==null?"—":n.toLocaleString("en"));
+const todayStr = new Date().toISOString().slice(0,10);
+const thisMonth = todayStr.slice(0,7);
+const ap = f => (f.iata||f.icao||"?");
+function airportOf(code){ return S.airports[code] || null; }
+function normCabin(c){
+  const m = {Y:"Economy",J:"Business",C:"Business",F:"First",W:"Premium Economy",
+             economy:"Economy",business:"Business",first:"First"};
+  return m[c] || m[(c||"").toLowerCase()] || c || "";
+}
+function durTxt(min){ if(min==null) return ""; return Math.floor(min/60)+"h"+String(min%60).padStart(2,"0"); }
+function esc(s){ return (s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* flags: SVG images from flagcdn (emoji flags don't render on Windows) */
+function flagCode(code){
+  if(!code) return "";
+  code = code.toUpperCase();
+  const map = {"PT-20":"pt","PT-30":"pt","TZ-25":"tz","TZ":"tz","XK":"xk"};
+  if(map[code]) return map[code];
+  return code.toLowerCase();   // handles gb-eng, gb-sct, gb-wls, gb-nir too
+}
+function flagImg(code, big){
+  const c = flagCode(code);
+  if(!c) return `<span class="fl" style="width:22px;text-align:center">🌐</span>`;
+  return `<img class="fl${big?" big":""}" src="https://flagcdn.com/w40/${c}.png" srcset="https://flagcdn.com/w80/${c}.png 2x" alt="${c}" loading="lazy">`;
+}
+const TR_EMOJI = {plane:"✈️",train:"🚆",bus:"🚌",car:"🚗",boat:"⛴️",scooter:"🛵",motorbike:"🏍️",walk:"🚶",bike:"🚲"};
+function trIcons(list){ return (list||[]).map(t=>TR_EMOJI[t]||t).join(" "); }
+function monthTxt(m){
+  if(!m) return "";
+  const [y,mo] = m.split("-");
+  return new Date(+y, +mo-1, 1).toLocaleString("en",{month:"short"})+" "+y;
+}
+
+/* continents */
+const CONT = {
+ EU:["AL","AD","AT","BE","BG","HR","CZ","DK","EE","FI","FR","DE","GI","GR","HU","IS","IE","IT","XK","LV","LI","LT","LU","MT","MC","ME","MK","NL","NO","PL","PT","RU","SE","CH","SI","SK","ES","TR","UA","GB","VA"],
+ AS:["AE","JP","KR","LK","MV","SG","TH"],
+ AF:["CV","MA","SC","TZ"],
+ NA:["CA","DO","MX","US"],
+ SA:["AR"],
+ OC:["AU","NZ"],
+ AN:["AQ"]
+};
+const CONT_NAMES = {EU:"Europe",AS:"Asia",AF:"Africa",NA:"North America",SA:"South America",OC:"Oceania",AN:"Antarctica"};
+const CONT_TOTALS = {EU:47,AS:48,AF:54,NA:23,SA:12,OC:14,AN:1};
+function continentOf(code){
+  const c2 = (code||"").slice(0,2).toUpperCase();
+  for(const [k,v] of Object.entries(CONT)) if(v.includes(c2)) return k;
+  return null;
+}
+
+/* ---------- derived stats ---------- */
+function countryGroups(){
+  const cs = S.countries;
+  return {
+    been: cs.filter(c=>c.status!=="want" && c.type==="country"),
+    regions: cs.filter(c=>c.status!=="want" && c.type==="region"),
+    lived: cs.filter(c=>c.status==="lived"),
+    want: cs.filter(c=>c.status==="want"),
+  };
+}
+function stats(){
+  const fl = S.flights, past = fl.filter(f=>f.date<=todayStr), fut = fl.filter(f=>f.date>todayStr);
+  const km = past.reduce((s,f)=>s+(f.distanceKm||0),0);
+  const airports = new Set(), airlines = new Set(), aircraft = new Set(), routes = {}, airlineCount = {}, cabins = {}, acCount = {};
+  past.forEach(f=>{
+    airports.add(f.from.icao); airports.add(f.to.icao);
+    const a = f.airline.name||f.airline.icao;
+    if(a){ airlines.add(a); airlineCount[a]=(airlineCount[a]||0)+1; }
+    const acn = f.aircraft.name||f.aircraft.icao;
+    if(acn){ aircraft.add(f.aircraft.icao||acn); acCount[acn]=(acCount[acn]||0)+1; }
+    const cb = normCabin(f.cabin);
+    if(cb) cabins[cb]=(cabins[cb]||0)+1;
+    const r=[ap(f.from),ap(f.to)].sort().join(" ↔ ");
+    if(!routes[r]) routes[r]={n:0,a:f.from.icao,b:f.to.icao};
+    routes[r].n++;
+  });
+  const years = {};
+  past.forEach(f=>{ const y=f.date.slice(0,4); years[y]=(years[y]||0)+1; });
+  let longest=null;
+  past.forEach(f=>{ if(!longest||((f.distanceKm||0)>(longest.distanceKm||0))) longest=f; });
+  return {past,fut,km,airports,airlines,aircraft,routes,airlineCount,cabins,acCount,years,longest};
+}
+const PALETTE = ["#38bdf8","#f59e0b","#34d399","#a78bfa","#f472b6","#fb923c","#22d3ee","#e879f9"];
+const colorOf = i => PALETTE[i % PALETTE.length];
+/* ---------- render: dashboard ---------- */
+function renderDash(){
+  const st = stats(), g = countryGroups();
+  const pct = Math.round(g.been.length/196*100);
+  const trips = S.trips.filter(t=>t.status!=="want").length;
+  $("#dashHero").innerHTML = S.countries.length ? `
+    <div class="hero">
+      <div class="h-top"><span class="h-num">${g.been.length}</span>
+        <span class="h-lbl">countries<br>visited</span>
+        <span class="h-pct">${pct}%<small>of the world</small></span></div>
+      <div class="h-chips">
+        <span class="hchip">🧳 ${trips} trips</span>
+        <span class="hchip">✈️ ${fmt(st.past.length)} flights</span>
+        <span class="hchip">📏 ${fmt(st.km)} km</span>
+        <span class="hchip">🌍 ${(st.km/40075).toFixed(1)}× around Earth</span>
+      </div>
+    </div>` : "";
+  $("#dashKpis").innerHTML = `
+    <div class="kpi k3" id="kpiLived" style="cursor:pointer"><span class="ico">🏠</span><small>Lived in</small><b>${g.lived.length}</b><div class="sub">${g.lived.map(c=>c.name).join(", ")||"—"}</div></div>
+    <div class="kpi k5" id="kpiWish" style="cursor:pointer"><span class="ico">📍</span><small>Wishlist</small><b>${g.want.length}</b><div class="sub">countries to go</div></div>
+    <div class="kpi k2"><span class="ico">🛫</span><small>Next flight</small><b>${st.fut[0]?ap(st.fut[0].from)+" → "+ap(st.fut[0].to):"—"}</b><div class="sub">${st.fut[0]?st.fut[0].date:"nothing booked"}</div></div>`;
+  $("#kpiLived").onclick = ()=> openCountryListSheet("🏠 Lived in", g.lived);
+  $("#kpiWish").onclick = ()=> openCountryListSheet("📍 Wishlist", g.want);
+  const hero = $("#dashHero .hero");
+  if(hero){ hero.style.cursor="pointer"; hero.onclick = ()=> document.querySelector('nav button[data-v="map"]').click(); }
+  const conts = {};
+  g.been.concat(g.regions.filter(r=>!g.been.some(c=>c.code===r.parent))).forEach(c=>{
+    const k = continentOf(c.parent||c.code); if(k) conts[k]=(conts[k]||0)+1;
+  });
+  $("#dashContinents").innerHTML = Object.entries(CONT_TOTALS).map(([k,total],i)=>{
+    const v = conts[k]||0, p = Math.min(100, v/total*100);
+    return `<div class="bar" data-ct="${k}" style="cursor:pointer"><span class="lbl">${CONT_NAMES[k]}</span>
+      <span class="trk"><span class="fil" style="width:${p}%;background:${colorOf(i)}"></span></span>
+      <span class="val">${v}<small>/${total}</small></span></div>`;
+  }).join("");
+  document.querySelectorAll("#dashContinents [data-ct]").forEach(el=> el.onclick = ()=> openContinentSheet(el.dataset.ct));
+  const up = st.fut.slice(0,6).map(f=>flightRow(f)).join("");
+  $("#dashUpcoming").innerHTML = up || `<div class="empty">No upcoming flights logged.</div>`;
+  const ys = Object.entries(st.years).sort(yearSort==="year" ? (a,b)=>a[0].localeCompare(b[0]) : (a,b)=>b[1]-a[1]);
+  const max = Math.max(1,...ys.map(([,v])=>v));
+  document.querySelectorAll("[data-ys]").forEach(c=>{
+    c.classList.toggle("on", c.dataset.ys===yearSort);
+    c.onclick = ()=>{ yearSort = c.dataset.ys; renderDash(); };
+  });
+  $("#dashYears").innerHTML = ys.map(([y,v])=>
+    `<div class="bar"><span class="lbl" style="color:var(--mut)">${y}</span><span class="trk"><span class="fil" style="width:${v/max*100}%"></span></span><span class="val">${v} <small>${v===1?"flight":"flights"}</small></span></div>`).join("");
+  $("#hdrTag").textContent = st.past.length ? `${g.been.length} countries · ${fmt(st.km)} km` : "";
+  drawMap($("#miniMap"), "countries");
+}
+
+/* ---------- render: flights ---------- */
+function flightRow(f, i){
+  const conflict = f.conflict ? ` <span class="badge" title="${esc(f.conflict)}">⚠︎</span>` : "";
+  const future = f.date>todayStr ? ` <span class="badge future">upcoming</span>` : "";
+  const nc = normCabin(f.cabin);
+  const cab = nc && nc!=="Economy" ? ` <span class="badge cab">${esc(nc)}</span>` : "";
+  const cf = airportOf(f.from.icao), ct = airportOf(f.to.icao);
+  const flags = (cf?flagImg(cf.country):"") + (ct?flagImg(ct.country):"");
+  return `<div class="row click" data-fr="${f.from.icao}" data-to="${f.to.icao}">
+    <span class="date">${f.date}</span>
+    <span style="display:flex;gap:4px;align-items:center;flex-shrink:0">${flags}</span>
+    <span><span class="route" style="color:var(--acc)">${ap(f.from)} → ${ap(f.to)}</span>${conflict}${future}${cab}<br>
+      <small style="color:var(--mut)">${esc([f.airline.name||f.airline.icao,f.flightNumber,f.aircraft.name||f.aircraft.icao].filter(Boolean).join(" · "))||"&nbsp;"}</small></span>
+    <span class="meta"><span style="color:var(--acc2)">${f.distanceKm?fmt(f.distanceKm)+" km":""}</span><br>${durTxt(f.durationMin)}</span>
+  </div>`;
+}
+function renderFlights(){
+  const st = stats();
+  $("#flightKpis").innerHTML = `
+    <div class="kpi"><small>Flights</small><b>${st.past.length}</b><div class="sub">${st.fut.length} upcoming</div></div>
+    <div class="kpi k4"><small>Distance</small><b>${fmt(st.km)} km</b><div class="sub">${(st.km/384400*100).toFixed(0)}% of the way to the Moon</div></div>
+    <div class="kpi k2"><small>Airports</small><b>${st.airports.size}</b><div class="sub">${st.airlines.size} airlines · ${st.aircraft.size} aircraft</div></div>
+    <div class="kpi k3"><small>Longest flight</small><b>${st.longest?fmt(st.longest.distanceKm)+" km":"—"}</b>
+      <div class="sub">${st.longest?ap(st.longest.from)+" → "+ap(st.longest.to):""}</div></div>`;
+  const topR = Object.entries(st.routes).sort((a,b)=>b[1].n-a[1].n).slice(0,6);
+  const maxR = topR[0]?.[1].n||1;
+  $("#topRoutes").innerHTML = topR.map(([r,o])=>
+    `<div class="bar" data-ra="${o.a}" data-rb="${o.b}" style="cursor:pointer"><span class="lbl" style="min-width:110px">${r}</span><span class="trk"><span class="fil" style="width:${o.n/maxR*100}%;background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></span></span><span class="val">${o.n}<small>×</small></span></div>`).join("");
+  document.querySelectorAll("#topRoutes [data-ra]").forEach(el=> el.onclick = ()=> openRouteSheet(el.dataset.ra, el.dataset.rb));
+  const topA = Object.entries(st.airlineCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxA = topA[0]?.[1]||1;
+  $("#topAirlines").innerHTML = topA.map(([a,v])=>
+    `<div class="bar" data-al="${esc(a)}" style="cursor:pointer"><span class="lbl" style="min-width:130px">${esc(a)}</span><span class="trk"><span class="fil" style="width:${v/maxA*100}%;background:linear-gradient(90deg,#f59e0b,#f97316)"></span></span><span class="val">${v}<small>×</small></span></div>`).join("");
+  document.querySelectorAll("#topAirlines [data-al]").forEach(el=> el.onclick = ()=> openAirlineSheet(el.dataset.al));
+  const cab = Object.entries(st.cabins).sort((a,b)=>b[1]-a[1]).map(([c,v])=>
+    `<div class="bar"><span class="lbl">${esc(c)}</span><span class="trk"><span class="fil" style="width:${v/st.past.length*100}%;background:linear-gradient(90deg,#a78bfa,#8b5cf6)"></span></span><span class="val">${v} <small>${Math.round(v/st.past.length*100)}%</small></span></div>`).join("");
+  const maxAc = Object.values(st.acCount).sort((x,y)=>y-x)[0]||1;
+  const acs = Object.entries(st.acCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([c,v])=>
+    `<div class="bar"><span class="lbl" style="min-width:130px">${esc(c)}</span><span class="trk"><span class="fil" style="width:${v/maxAc*100}%;background:linear-gradient(90deg,#34d399,#10b981)"></span></span><span class="val">${v}<small>×</small></span></div>`).join("");
+  $("#miscStats").innerHTML = `<div class="subgrp">Cabin class</div>${cab||"<div class='empty'>No cabin data</div>"}<div class="subgrp">Top aircraft</div>${acs||"<div class='empty'>No aircraft data</div>"}`;
+  const apCount = {};
+  st.past.forEach(f=>{ apCount[f.from.icao]=(apCount[f.from.icao]||0)+1; apCount[f.to.icao]=(apCount[f.to.icao]||0)+1; });
+  const apsSorted = Object.entries(apCount).sort((a,b)=>b[1]-a[1]);
+  const maxAp = apsSorted[0]?.[1]||1;
+  const topAp = apsSorted.slice(0,8).map(([ic,v])=>{
+    const a = airportOf(ic)||{iata:ic,city:"",country:""};
+    return `<div class="bar click" data-ap="${ic}" style="cursor:pointer"><span class="lbl" style="min-width:110px;display:flex;gap:6px;align-items:center">${flagImg(a.country)}${a.iata||ic}</span>
+      <span class="trk"><span class="fil" style="width:${v/maxAp*100}%;background:linear-gradient(90deg,#22d3ee,#0891b2)"></span></span>
+      <span class="val">${v}<small>×</small></span></div>`;
+  }).join("");
+  const restAp = apsSorted.slice(8).map(([ic,v])=>{
+    const a = airportOf(ic)||{iata:ic,city:ic,name:"",country:""};
+    return `<div class="row click" data-ap="${ic}">${flagImg(a.country)}<span>${a.iata||ic} — ${esc(a.city)}</span>
+      <span class="meta">${v}×</span></div>`;
+  }).join("");
+  $("#airportStats").innerHTML = topAp + (restAp?
+    `<div class="subgrp" id="apToggle" style="cursor:pointer;user-select:none">▸ All airports (${apsSorted.length})</div>
+     <div id="apRest" style="display:none">${restAp}</div>`:"");
+  const tg = $("#apToggle");
+  if(tg) tg.onclick = ()=>{
+    const r = $("#apRest"), open = r.style.display!=="none";
+    r.style.display = open?"none":"block";
+    tg.textContent = (open?"▸":"▾")+` All airports (${apsSorted.length})`;
+  };
+  document.querySelectorAll("#airportStats [data-ap]").forEach(el=> el.onclick = ()=> openAirportSheet(el.dataset.ap));
+  const years = [...new Set(S.flights.map(f=>f.date.slice(0,4)))].sort().reverse();
+  $("#yearChips").innerHTML = `<span class="chip ${yearFilter==="all"?"on":""}" data-y="all">All</span>`+
+    years.map(y=>`<span class="chip ${yearFilter===y?"on":""}" data-y="${y}">${y}</span>`).join("");
+  document.querySelectorAll("#yearChips .chip").forEach(c=>c.onclick=()=>{ yearFilter=c.dataset.y; renderFlights(); });
+  const list = S.flights.filter(f=>yearFilter==="all"||f.date.startsWith(yearFilter))
+    .slice().sort((a,b)=>b.date.localeCompare(a.date));
+  $("#flightListTitle").textContent = `Flights (${list.length})`;
+  $("#flightList").innerHTML = list.map(flightRow).join("") || `<div class="empty">No flights. Import your seed in Data.</div>`;
+  document.querySelectorAll("#flightList .row, #dashUpcoming .row").forEach(r=>{
+    if(r.dataset.fr) r.onclick = ()=> openRouteSheet(r.dataset.fr, r.dataset.to);
+  });
+}
+
+/* ---------- render: map view + country list ---------- */
+function countryRow(c){
+  const badge = c.status==="lived" ? `<span class="badge lived">lived</span>` :
+                c.status==="want" ? `<span class="badge want">wishlist</span>` :
+                c.type==="region" ? `<span class="badge">region</span>` : "";
+  return `<div class="row click" data-cc="${c.code}">${flagImg(c.code)}<span>${esc(c.name)}</span>
+    <span class="meta">${badge}</span></div>`;
+}
+function renderMapView(){
+  drawMap($("#bigMap"), mapMode);
+  $("#mapTitle").textContent = mapMode==="countries" ? "Countries" : "Flight routes";
+  $("#chipCountries").classList.toggle("on", mapMode==="countries");
+  $("#chipRoutes").classList.toggle("on", mapMode==="routes");
+  if(mapMode==="countries"){
+    const g = countryGroups();
+    const sec = (title, arr) => arr.length ? `<div class="subgrp">${title} (${arr.length})</div>`+
+      arr.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(countryRow).join("") : "";
+    $("#clistTitle").textContent = `Countries & regions`;
+    $("#countryList").innerHTML =
+      sec("Visited", g.been.filter(c=>c.status!=="lived")) +
+      sec("Lived in", g.lived) +
+      sec("Regions", g.regions) +
+      sec("Wishlist", g.want);
+    document.querySelectorAll("#countryList .row").forEach(r=> r.onclick = ()=> openCountrySheet(r.dataset.cc));
+  } else {
+    const st = stats();
+    const aps = [...st.airports].map(ic=>({ic, a:airportOf(ic)})).filter(x=>x.a)
+      .sort((x,y)=>x.a.country.localeCompare(y.a.country));
+    $("#clistTitle").textContent = `Airports (${aps.length})`;
+    $("#countryList").innerHTML = aps.map(({ic,a})=>
+      `<div class="row">${flagImg(a.country)}<span>${a.iata||ic} — ${esc(a.city)}</span>
+       <span class="meta">${esc(a.name)}</span></div>`).join("");
+  }
+}
+
+/* ---------- render: trips timeline ---------- */
+function renderTrips(){
+  document.querySelectorAll("[data-tf]").forEach(c=>{
+    c.classList.toggle("on", c.dataset.tf===tripFilter);
+    c.onclick = ()=>{ tripFilter=c.dataset.tf; renderTrips(); };
+  });
+  let html = "";
+  if(tripFilter==="want" || tripFilter==="all"){
+    const w = countryGroups().want;
+    if(tripFilter==="want"){
+      html += w.map(countryRow).join("") || `<div class="empty">Wishlist is empty.</div>`;
+      $("#tripList").innerHTML = html;
+      document.querySelectorAll("#tripList .row").forEach(r=> r.onclick = ()=> openCountrySheet(r.dataset.cc));
+      return;
+    }
+  }
+  const ts = S.trips.filter(t=>tripFilter==="all"||t.status===(tripFilter==="visit"?"visit":"lived"))
+    .slice().sort((a,b)=>(b.start||"").localeCompare(a.start||""));
+  let curYear = "";
+  ts.forEach(t=>{
+    const y = (t.start||"????").slice(0,4);
+    if(y!==curYear){ html += `<div class="yearhdr">${y}</div>`; curYear = y; }
+    const idx = S.trips.indexOf(t);
+    const lived = t.status==="lived";
+    const dates = t.end && t.end!==t.start ? `${monthTxt(t.start)} – ${monthTxt(t.end)}` : monthTxt(t.start);
+    html += `<div class="row click" data-ti="${idx}">${flagImg(t.code)}
+      <span><b style="color:${lived?"var(--ok)":"var(--txt)"}">${esc(t.country)}</b>${lived?' <span class="badge lived">lived</span>':""}
+        <br><small class="tr-ico">${trIcons(t.transport)}</small>
+        <small style="color:var(--mut)"> ${dates}</small>
+        ${t.note?`<br><small style="color:var(--mut)">${esc(t.note)}</small>`:""}</span>
+      <span class="meta"></span></div>`;
+  });
+  if(tripFilter==="all"){
+    const w = countryGroups().want;
+    if(w.length) html += `<div class="yearhdr">FUTURE VISITS</div>` + w.map(countryRow).join("");
+  }
+  $("#tripList").innerHTML = html || `<div class="empty">No trips logged yet.</div>`;
+  document.querySelectorAll("#tripList .row").forEach(r=>{
+    if(r.dataset.ti!==undefined) r.onclick = ()=> openTripSheet(+r.dataset.ti);
+    else if(r.dataset.cc) r.onclick = ()=> openCountrySheet(r.dataset.cc);
+  });
+}
+
+/* ---------- render: data ---------- */
+function renderData(){
+  const st = S.flights.length||S.countries.length;
+  const bytes = (localStorage.getItem(KEY)||"").length;
+  $("#dataInfo").innerHTML = st
+    ? `<div class="row"><span>Countries & regions</span><span class="meta">${S.countries.length}</span></div>
+       <div class="row"><span>Trips</span><span class="meta">${S.trips.length}</span></div>
+       <div class="row"><span>Flights</span><span class="meta">${S.flights.length}</span></div>
+       <div class="row"><span>Airports database</span><span class="meta">${Object.keys(S.airports).length}</span></div>
+       <div class="row"><span>Storage used</span><span class="meta">${(bytes/1024).toFixed(0)} KB</span></div>
+       <div class="row"><span>App version</span><span class="meta">v${APP_VERSION}</span></div>`
+    : `<div class="empty">No data yet — import <b>volantia-seed.json</b> below to get started.</div>`;
+}
+/* ---------- import / export ---------- */
+function mergeIn(data){
+  if(!S) S = blank();
+  const fkey = f => f.date+"|"+f.from.icao+"|"+f.to.icao+"|"+(f.flightNumber||"");
+  const have = new Set(S.flights.map(fkey));
+  (data.flights||[]).forEach(f=>{ if(!have.has(fkey(f))){ S.flights.push(f); have.add(fkey(f)); } });
+  const haveC = new Map(S.countries.map(c=>[c.name,c]));
+  (data.countries||[]).forEach(c=>{
+    const ex = haveC.get(c.name);
+    if(!ex){ S.countries.push(c); haveC.set(c.name,c); }
+    else Object.assign(ex, {...c, ...ex, status: c.status||ex.status});
+  });
+  const tkey = t => t.country+"|"+(t.start||"")+"|"+(t.note||"");
+  const haveT = new Set(S.trips.map(tkey));
+  (data.trips||[]).forEach(t=>{ if(!haveT.has(tkey(t))){ S.trips.push(t); haveT.add(tkey(t)); } });
+  Object.assign(S.airports, data.airports||{});
+  S.flights.sort((a,b)=>a.date.localeCompare(b.date));
+  save();
+}
+$("#btnImport").onclick = ()=> $("#fileImport").click();
+$("#fileImport").onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  f.text().then(txt=>{
+    try{
+      const data = JSON.parse(txt);
+      if(data.app!=="volantia" && !data.flights) throw new Error("Not a Volantia file");
+      mergeIn(data); renderAll();
+      alert(`Imported ✓  ${S.flights.length} flights, ${S.countries.length} countries, ${S.trips.length} trips.`);
+    }catch(err){ alert("Import failed: "+err.message); }
+    e.target.value="";
+  });
+};
+$("#btnExport").onclick = ()=>{
+  const blob = new Blob([JSON.stringify({...S, exported:new Date().toISOString()},null,1)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = `volantia-backup-${todayStr}.json`; a.click();
+};
+$("#btnWipe").onclick = ()=>{
+  if(confirm("Erase ALL Volantia data on this device? Export a backup first!")){
+    localStorage.removeItem(KEY); S = blank(); renderAll();
+  }
+};
+
+/* ---------- sheets ---------- */
+function openSheet(html){ $("#sheet").innerHTML = html; $("#modal").classList.add("open"); }
+function closeSheet(){ $("#modal").classList.remove("open"); }
+$("#modal").onclick = e=>{ if(e.target.id==="modal") closeSheet(); };
+
+function openCountrySheet(code){
+  const c = S.countries.find(x=>x.code===code) || {name:code, code, status:"been"};
+  const trips = S.trips.filter(t=>t.country===c.name);
+  const REGION_AP = {
+    "PT-20": ic=>/^LP(PD|LA|HR|AZ|SJ|GR|CR|FL)/.test(ic),
+    "PT-30": ic=>/^LP(MA|PS)/.test(ic),
+    "TZ-25": ic=>/^HTZ/.test(ic),
+    "GB-NIR": ic=>/^EGA[ACE]/.test(ic),
+    "GB-SCT": ic=>/^EG[PQ]/.test(ic),
+    "GB-WLS": ic=>/^EG[FO]/.test(ic),
+    "GB-ENG": ic=>/^EG/.test(ic) && !/^EGA[ACE]/.test(ic) && !/^EG[PQFO]/.test(ic),
+  };
+  let match;
+  if(REGION_AP[c.code]){
+    const test = REGION_AP[c.code];
+    match = f => test(f.from.icao) || test(f.to.icao);
+  } else {
+    const cc = flagCode(c.code).slice(0,2).toUpperCase();
+    match = f => {
+      const A=airportOf(f.from.icao), B=airportOf(f.to.icao);
+      return (A&&A.country===cc) || (B&&B.country===cc);
+    };
+  }
+  const flights = S.flights.filter(match);
+  const km = flights.reduce((s,f)=>s+(f.distanceKm||0),0);
+  const badge = c.status==="lived"?`<span class="badge lived">lived</span>`:
+                c.status==="want"?`<span class="badge want">wishlist</span>`:`<span class="badge">visited</span>`;
+  openSheet(`<h3>${flagImg(c.code,true)} ${esc(c.name)} ${badge}</h3>
+    <div class="kpis" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="kpi"><small>Trips</small><b>${trips.length}</b></div>
+      <div class="kpi k2"><small>Flights</small><b>${flights.length}</b></div>
+      <div class="kpi k4"><small>Km</small><b>${fmt(km)}</b></div>
+    </div>
+    ${trips.length?`<div class="subgrp">Trips</div>`+trips.map(t=>{
+      const dates = t.end&&t.end!==t.start?`${monthTxt(t.start)} – ${monthTxt(t.end)}`:monthTxt(t.start);
+      return `<div class="row"><span class="tr-ico">${trIcons(t.transport)}</span>
+        <span>${dates}${t.note?`<br><small style="color:var(--mut)">${esc(t.note)}</small>`:""}</span></div>`;
+    }).join(""):""}
+    ${flights.length?`<div class="subgrp">Flights</div>`+flights.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,20).map(f=>
+      `<div class="row"><span class="date">${f.date}</span><span class="route">${ap(f.from)} → ${ap(f.to)}</span>
+       <span class="meta">${f.distanceKm?fmt(f.distanceKm)+" km":""}</span></div>`).join(""):""}
+    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+}
+
+function openRouteSheet(icaoA, icaoB){
+  const A = airportOf(icaoA)||{city:icaoA,name:"",iata:icaoA,country:""};
+  const B = airportOf(icaoB)||{city:icaoB,name:"",iata:icaoB,country:""};
+  const fls = S.flights.filter(f=>
+    (f.from.icao===icaoA&&f.to.icao===icaoB)||(f.from.icao===icaoB&&f.to.icao===icaoA))
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  const km = fls[0]?.distanceKm;
+  openSheet(`<h3>${flagImg(A.country)} ${A.iata||icaoA} ↔ ${flagImg(B.country)} ${B.iata||icaoB}</h3>
+    <p class="note" style="margin:0 0 10px">${esc(A.city)} (${esc(A.name)}) ↔ ${esc(B.city)} (${esc(B.name)})
+      ${km?` · ${fmt(km)} km`:""} · flown ${fls.length}×</p>
+    ${fls.map(f=>`<div class="row"><span class="date">${f.date}</span>
+      <span><span class="route">${ap(f.from)} → ${ap(f.to)}</span><br>
+      <small style="color:var(--mut)">${esc([f.airline.name,f.flightNumber,f.aircraft.name||f.aircraft.icao,f.registration].filter(Boolean).join(" · "))||"&nbsp;"}</small></span>
+      <span class="meta">${durTxt(f.durationMin)}</span></div>`).join("")}
+    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+}
+
+function openAirportSheet(icao){
+  const a = airportOf(icao)||{iata:icao,city:icao,name:"",country:""};
+  const fls = S.flights.filter(f=>f.from.icao===icao||f.to.icao===icao).sort((x,y)=>y.date.localeCompare(x.date));
+  const past = fls.filter(f=>f.date<=todayStr);
+  const dests = new Set(past.map(f=>f.from.icao===icao?f.to.icao:f.from.icao));
+  openSheet(`<h3>${flagImg(a.country,true)} ${a.iata||icao} — ${esc(a.city)}</h3>
+    <p class="note" style="margin:0 0 10px">${esc(a.name)} · ${icao}</p>
+    <div class="kpis" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="kpi"><small>Flights</small><b>${past.length}</b></div>
+      <div class="kpi k2"><small>Destinations</small><b>${dests.size}</b></div>
+      <div class="kpi k3"><small>First / last</small><b style="font-size:.8rem">${past[past.length-1]?.date.slice(0,4)||"—"} – ${past[0]?.date.slice(0,4)||"—"}</b></div>
+    </div>
+    ${fls.slice(0,25).map(f=>`<div class="row"><span class="date">${f.date}</span>
+      <span class="route">${ap(f.from)} → ${ap(f.to)}</span>
+      <span class="meta">${esc(f.airline.name||f.flightNumber||"")}</span></div>`).join("")}
+    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+}
+
+function openAirlineSheet(name){
+  const fls = S.flights.filter(f=>(f.airline.name||f.airline.icao)===name).sort((x,y)=>y.date.localeCompare(x.date));
+  const past = fls.filter(f=>f.date<=todayStr);
+  const km = past.reduce((t,f)=>t+(f.distanceKm||0),0);
+  const routes = new Set(past.map(f=>[ap(f.from),ap(f.to)].sort().join("↔")));
+  openSheet(`<h3>✈️ ${esc(name)}</h3>
+    <div class="kpis" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="kpi"><small>Flights</small><b>${past.length}</b></div>
+      <div class="kpi k2"><small>Routes</small><b>${routes.size}</b></div>
+      <div class="kpi k4"><small>Km</small><b>${fmt(km)}</b></div>
+    </div>
+    ${fls.map(f=>`<div class="row"><span class="date">${f.date}</span>
+      <span><span class="route">${ap(f.from)} → ${ap(f.to)}</span><br>
+      <small style="color:var(--mut)">${esc([f.flightNumber,f.aircraft.name||f.aircraft.icao].filter(Boolean).join(" · "))||"&nbsp;"}</small></span>
+      <span class="meta">${f.distanceKm?fmt(f.distanceKm)+" km":""}</span></div>`).join("")}
+    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+}
+
+function bindSheetCountryRows(){
+  document.querySelectorAll("#sheet .row[data-cc]").forEach(r=> r.onclick = ()=> openCountrySheet(r.dataset.cc));
+}
+function openCountryListSheet(title, arr){
+  openSheet(`<h3>${title} <span class="badge">${arr.length}</span></h3>
+    ${arr.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(countryRow).join("")||"<div class='empty'>Nothing here yet.</div>"}
+    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+  bindSheetCountryRows();
+}
+function openContinentSheet(k){
+  const mine = S.countries.filter(c=> continentOf(c.parent||c.code)===k);
+  const visited = mine.filter(c=>c.status!=="want"), want = mine.filter(c=>c.status==="want");
+  openSheet(`<h3>${CONT_NAMES[k]} <span class="badge">${visited.filter(c=>c.type==="country").length}/${CONT_TOTALS[k]} countries</span></h3>
+    ${visited.length?`<div class="subgrp">Visited</div>`+visited.sort((a,b)=>a.name.localeCompare(b.name)).map(countryRow).join(""):""}
+    ${want.length?`<div class="subgrp">Wishlist</div>`+want.sort((a,b)=>a.name.localeCompare(b.name)).map(countryRow).join(""):""}
+    ${!mine.length?"<div class='empty'>Nothing here yet — time to plan a trip!</div>":""}
+    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+  bindSheetCountryRows();
+}
+
+/* ---------- add / edit forms ---------- */
+$("#btnAddFlight").onclick = ()=>{
+  openSheet(`<h3>Add flight</h3><div class="stack">
+    <div><label>Date</label><input type="date" id="nfDate" value="${todayStr}"></div>
+    <div class="grid2">
+      <div><label>From (IATA/ICAO)</label><input id="nfFrom" placeholder="LIS" style="text-transform:uppercase"></div>
+      <div><label>To</label><input id="nfTo" placeholder="OPO" style="text-transform:uppercase"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Flight number</label><input id="nfNum" placeholder="TP1234"></div>
+      <div><label>Airline</label><input id="nfAirline" placeholder="TAP Air Portugal"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Aircraft</label><input id="nfAircraft" placeholder="A320"></div>
+      <div><label>Seat</label><input id="nfSeat" placeholder="14A"></div>
+    </div>
+    <div class="split"><button class="btn ghost" data-x="cancel">Cancel</button>
+    <button class="btn" data-x="saveFlight">Save flight</button></div></div>`);
+};
+$("#btnAddTrip").onclick = ()=> openTripSheet(-1);
+function openTripSheet(idx){
+  const t = idx>=0 ? S.trips[idx] : {country:"",start:thisMonth,end:"",transport:[],note:"",status:"visit"};
+  openSheet(`<h3>${idx>=0?"Edit":"Add"} trip</h3><div class="stack" data-idx="${idx}" id="tripForm">
+    <div><label>Country / territory</label><input id="ntCountry" value="${esc(t.country)}" placeholder="Japan"></div>
+    <div class="grid2">
+      <div><label>Start (month)</label><input type="month" id="ntStart" value="${t.start||""}"></div>
+      <div><label>End (optional)</label><input type="month" id="ntEnd" value="${t.end||""}"></div>
+    </div>
+    <div><label>Status</label><select id="ntStatus">
+      <option value="visit" ${t.status!=="lived"?"selected":""}>Visit</option>
+      <option value="lived" ${t.status==="lived"?"selected":""}>Lived there</option></select></div>
+    <div><label>Transport</label><div class="chips" id="ntTransport" style="margin:0">
+      ${Object.entries(TR_EMOJI).map(([k,e])=>`<span class="chip ${t.transport?.includes(k)?"on":""}" data-t="${k}">${e}</span>`).join("")}
+    </div></div>
+    <div><label>Notes / cities</label><textarea id="ntNotes" rows="2">${esc(t.note)}</textarea></div>
+    <div class="split">
+      ${idx>=0?`<button class="btn danger" data-x="delTrip">Delete</button>`:""}
+      <button class="btn ghost" data-x="cancel">Cancel</button>
+      <button class="btn" data-x="saveTrip">Save</button></div></div>`);
+}
+document.addEventListener("click", e=>{
+  const x = e.target.dataset?.x;
+  if(e.target.matches("#ntTransport .chip")){ e.target.classList.toggle("on"); return; }
+  if(!x) return;
+  if(x==="cancel"){ closeSheet(); return; }
+  if(x==="saveFlight"){
+    const find = v=>{
+      v=(v||"").trim().toUpperCase(); if(!v) return null;
+      if(S.airports[v]) return {icao:v, ...S.airports[v]};
+      for(const [ic,a] of Object.entries(S.airports)) if(a.iata===v) return {icao:ic, ...a};
+      return {icao:v.length===4?v:"", iata:v.length===3?v:"", city:"", name:"", lat:null, lon:null};
+    };
+    const A=find($("#nfFrom").value), B=find($("#nfTo").value);
+    if(!A||!B){ alert("From/To required"); return; }
+    const r=Math.PI/180, dist=(A.lat!=null&&B.lat!=null)?
+      Math.round(2*6371*Math.asin(Math.sqrt(Math.sin((B.lat-A.lat)*r/2)**2+Math.cos(A.lat*r)*Math.cos(B.lat*r)*Math.sin((B.lon-A.lon)*r/2)**2))):null;
+    S.flights.push({date:$("#nfDate").value, flightNumber:$("#nfNum").value.trim().toUpperCase(),
+      airline:{name:$("#nfAirline").value.trim(),iata:"",icao:""},
+      from:{icao:A.icao,iata:A.iata,city:A.city,name:A.name}, to:{icao:B.icao,iata:B.iata,city:B.city,name:B.name},
+      depTime:"",arrTime:"",durationMin:null,distanceKm:dist,
+      aircraft:{icao:"",name:$("#nfAircraft").value.trim()},registration:"",cabin:"",
+      seat:$("#nfSeat").value.trim(),seatType:"",reason:"",note:"",sources:{manual:true}});
+    S.flights.sort((a,b)=>a.date.localeCompare(b.date));
+    save(); closeSheet(); renderAll(); return;
+  }
+  if(x==="saveTrip" || x==="delTrip"){
+    const idx = +$("#tripForm").dataset.idx;
+    if(x==="delTrip"){ if(confirm("Delete this trip?")){ S.trips.splice(idx,1); save(); closeSheet(); renderAll(); } return; }
+    const country = $("#ntCountry").value.trim(); if(!country){ alert("Country required"); return; }
+    const known = S.countries.find(c=>c.name.toLowerCase()===country.toLowerCase());
+    const t = {country, code:known?.code||"", start:$("#ntStart").value, end:$("#ntEnd").value||null,
+      transport:[...document.querySelectorAll("#ntTransport .chip.on")].map(c=>c.dataset.t),
+      note:$("#ntNotes").value.trim(), status:$("#ntStatus").value};
+    if(idx>=0) S.trips[idx]=t; else S.trips.push(t);
+    if(known){ if(t.status==="lived") known.status="lived"; else if(known.status==="want") known.status="been"; }
+    else S.countries.push({name:country, code:"", type:"country", status:t.status==="lived"?"lived":"been"});
+    save(); closeSheet(); renderAll(); return;
+  }
+});
+
+/* ---------- world map (Miller projection) ---------- */
+const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json";
+function decodeTopo(topo, objName){
+  const t = topo.transform, arcs = topo.arcs.map(arc=>{
+    let x=0,y=0; return arc.map(([dx,dy])=>{ x+=dx; y+=dy;
+      return [x*t.scale[0]+t.translate[0], y*t.scale[1]+t.translate[1]]; });
+  });
+  function ring(idxs){
+    let pts=[];
+    idxs.forEach(i=>{ let a = i>=0 ? arcs[i] : arcs[~i].slice().reverse();
+      if(pts.length) a=a.slice(1); pts=pts.concat(a); });
+    return pts;
+  }
+  return topo.objects[objName].geometries.map(g=>{
+    let polys=[];
+    if(g.type==="Polygon") polys=[g.arcs.map(ring)];
+    else if(g.type==="MultiPolygon") polys=g.arcs.map(p=>p.map(ring));
+    return {id:String(g.id??""), name:g.properties?.name||"", polys};
+  });
+}
+async function loadWorld(){
+  if(world) return world;
+  const res = await fetch(WORLD_URL);
+  world = decodeTopo(await res.json(), "countries");
+  return world;
+}
+const MLAT_MAX = 84, MLAT_MIN = -60, R = Math.PI/180;
+const millerY = lat => 1.25*Math.log(Math.tan(Math.PI/4 + 0.4*lat*R));
+const MY_MAX = millerY(MLAT_MAX), MY_MIN = millerY(MLAT_MIN);
+function project(lon, lat, w, h){
+  lat = Math.max(MLAT_MIN, Math.min(MLAT_MAX, lat));
+  return [(lon+180)/360*w, (MY_MAX-millerY(lat))/(MY_MAX-MY_MIN)*h];
+}
+function unproject(x, y, w, h){
+  const lon = x/w*360-180;
+  const my = MY_MAX - y/h*(MY_MAX-MY_MIN);
+  const lat = (2.5*Math.atan(Math.exp(0.8*my)) - 5*Math.PI/8)/R;
+  return [lon, lat];
+}
+function visitedIds(){
+  const ids = new Map(), names = new Map(); // -> status (priority: lived > been > want)
+  const PRI = {want:1, been:2, lived:3};
+  S.countries.forEach(c=>{
+    const st = c.status||"been";
+    const put = (m,k)=>{ if((PRI[st]||0) > (PRI[m.get(k)]||0)) m.set(k, st); };
+    if(c.isoNum) put(ids, String(+c.isoNum));
+    if(c.parentIsoNum) put(ids, String(+c.parentIsoNum));
+    if(c.code==="XK") put(names, "Kosovo");
+  });
+  return {ids, names};
+}
+const MAP_FILL = {been:"#2f7fb8", lived:"#2fa47a", want:"#4a5a7a", none:"#1d2a40"};
+async function drawMap(canvas, mode){
+  try{ await loadWorld(); }catch(e){
+    if(!canvas.dataset.warned){ canvas.dataset.warned=1;
+      canvas.parentElement.insertAdjacentHTML("beforeend","<p class='note'>Map needs internet on first load.</p>"); }
+    return;
+  }
+  const dpr = window.devicePixelRatio||1;
+  const w = canvas.clientWidth||600, h = Math.round(w*0.60);
+  canvas.width=w*dpr; canvas.height=h*dpr; canvas.style.height=h+"px";
+  mapDims[canvas.id] = {w,h};
+  const ctx = canvas.getContext("2d"); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,w,h);
+  const {ids,names} = visitedIds();
+  // countries whose atlas geometry includes overseas territories: highlight mainland box only
+  const MAINLAND = {"250":[-6,41,10,52.5],"528":[3,50,8,54],"208":[7,54,16,58]}; // FR, NL, DK
+  const drawRing = ring=>{
+    let prev=null;
+    ring.forEach(([lon,lat],i)=>{
+      if(prev!=null){ while(lon-prev>180) lon-=360; while(prev-lon>180) lon+=360; }
+      prev=lon;
+      const [x,y]=project(lon,lat,w,h);
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    });
+    ctx.closePath();
+  };
+  world.forEach(c=>{
+    const st = ids.get(String(+c.id)) || names.get(c.name);
+    const box = MAINLAND[String(+c.id)];
+    c.polys.forEach(poly=>{
+      let eff = st;
+      if(box && st){
+        const r0 = poly[0]; let sx=0, sy=0;
+        r0.forEach(([lo,la])=>{ sx+=lo; sy+=la; });
+        const clon=sx/r0.length, clat=sy/r0.length;
+        if(!(clon>=box[0]&&clat>=box[1]&&clon<=box[2]&&clat<=box[3])) eff = null;
+      }
+      ctx.beginPath();
+      poly.forEach(drawRing);
+      if(mode==="countries" && eff==="want"){
+        ctx.fillStyle = "rgba(167,139,250,.16)"; ctx.fill();
+        ctx.strokeStyle = "#a78bfa"; ctx.lineWidth = 1; ctx.stroke();
+      } else {
+        ctx.fillStyle = mode==="countries" ? (MAP_FILL[eff]||MAP_FILL.none) : MAP_FILL.none;
+        ctx.fill();
+        ctx.strokeStyle = "#0b1018"; ctx.lineWidth = .5; ctx.stroke();
+      }
+    });
+  });
+  if(mode==="routes"){
+    routeGeom = [];
+    const done = new Set();
+    ctx.strokeStyle="rgba(56,189,248,.55)"; ctx.lineWidth=1.2;
+    S.flights.forEach(f=>{
+      const A=airportOf(f.from.icao), B=airportOf(f.to.icao);
+      if(!A||!B) return;
+      const k=[f.from.icao,f.to.icao].sort().join("-");
+      if(done.has(k)) return; done.add(k);
+      const [x1,y1]=project(A.lon,A.lat,w,h), [x2,y2]=project(B.lon,B.lat,w,h);
+      const mx=(x1+x2)/2, my=(y1+y2)/2 - Math.min(60,Math.hypot(x2-x1,y2-y1)*0.22);
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.quadraticCurveTo(mx,my,x2,y2); ctx.stroke();
+      routeGeom.push({x1,y1,mx,my,x2,y2,a:f.from.icao,b:f.to.icao});
+    });
+    ctx.fillStyle="#f59e0b";
+    const aps=new Set(); S.flights.forEach(f=>{aps.add(f.from.icao);aps.add(f.to.icao);});
+    aps.forEach(ic=>{ const a=airportOf(ic); if(!a) return;
+      const [x,y]=project(a.lon,a.lat,w,h);
+      ctx.beginPath(); ctx.arc(x,y,2.3,0,7); ctx.fill(); });
+  }
+}
+function qBezier(p,t){ // point on quadratic bezier
+  const u=1-t;
+  return [u*u*p.x1+2*u*t*p.mx+t*t*p.x2, u*u*p.y1+2*u*t*p.my+t*t*p.y2];
+}
+function mapClick(e, canvas){
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX-rect.left, y = e.clientY-rect.top;
+  const {w,h} = mapDims[canvas.id]||{w:rect.width,h:rect.height};
+  if(mapMode==="routes" && canvas.id==="bigMap"){
+    let best=null, bd=14;
+    routeGeom.forEach(p=>{
+      for(let t=0;t<=1;t+=0.05){
+        const [px,py]=qBezier(p,t), d=Math.hypot(px-x,py-y);
+        if(d<bd){ bd=d; best=p; }
+      }
+    });
+    if(best){ openRouteSheet(best.a, best.b); return; }
+  }
+  // country hit-test in geo space
+  const [lon,lat] = unproject(x,y,w,h);
+  if(!world) return;
+  const hit = world.find(c=>c.polys.some(poly=>poly.some(ring=>{
+    let inside=false;
+    for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+      const [xi,yi]=ring[i], [xj,yj]=ring[j];
+      if(((yi>lat)!==(yj>lat)) && (lon < (xj-xi)*(lat-yi)/(yj-yi)+xi)) inside=!inside;
+    }
+    return inside;
+  })));
+  if(!hit) return;
+  const entry = S.countries.find(c=>
+    (c.isoNum && String(+c.isoNum)===String(+hit.id)) || (c.code==="XK"&&hit.name==="Kosovo"));
+  if(entry) openCountrySheet(entry.code);
+  else openSheet(`<h3>${esc(hit.name)}</h3><p class="note">Not visited yet — add it to your wishlist from the Trips tab.</p>
+    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+}
+$("#bigMap").onclick = e=> mapClick(e, $("#bigMap"));
+$("#miniMap").onclick = ()=> document.querySelector('nav button[data-v="map"]').click();
+$("#chipCountries").onclick=()=>{ mapMode="countries"; renderMapView(); };
+$("#chipRoutes").onclick=()=>{ mapMode="routes"; renderMapView(); };
+
+/* ---------- nav & init ---------- */
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+b.dataset.v));
+  renderAll();
+});
+function renderAll(){
+  if(!S) S = blank();
+  renderDash(); renderFlights(); renderMapView(); renderTrips(); renderData();
+}
+load();
+if(!S){ S = blank(); document.querySelector('nav button[data-v="data"]').click(); }
+renderAll();
+if("serviceWorker" in navigator && location.protocol.startsWith("http"))
+  navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
+<!--VOLANTIA-EOF-->
