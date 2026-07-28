@@ -122,7 +122,15 @@ label{font-size:.72rem;color:var(--mut);text-transform:uppercase;letter-spacing:
 .modal{position:fixed;inset:0;background:rgba(2,6,14,.68);z-index:50;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
 .modal.open{display:flex}
 .sheet{background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom));
-  width:100%;max-width:640px;max-height:88vh;overflow-y:auto;animation:up .22s ease}
+  width:100%;max-width:640px;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;animation:up .22s ease;position:relative}
+.sheet::before{content:"";position:sticky;top:-6px;display:block;width:42px;height:4px;border-radius:3px;
+  background:var(--line);margin:-10px auto 12px}
+.sheetX{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;
+  background:var(--card2);border:1px solid var(--line);color:var(--txt);font-size:.95rem;
+  cursor:pointer;line-height:1;z-index:2}
+.sheetX:active{background:var(--bad);color:#fff}
+body.locked{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 @keyframes up{from{transform:translateY(30px);opacity:.5}to{transform:none;opacity:1}}
 .sheet h3{margin-bottom:12px;font-size:1.05rem;display:flex;align-items:center;gap:10px}
 .empty{color:var(--mut);text-align:center;padding:28px 10px;font-size:.85rem;line-height:1.5}
@@ -139,11 +147,19 @@ label{font-size:.72rem;color:var(--mut);text-transform:uppercase;letter-spacing:
 #updBanner button{margin-left:auto;background:#04121e;color:#eaf1fb;border:0;border-radius:9px;
   padding:7px 12px;font-size:.78rem;font-weight:700;cursor:pointer}
 #updBanner #updX{cursor:pointer;opacity:.7;font-weight:700}
+.searchbox{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:0 12px;margin-bottom:12px}
+.searchbox input{border:0;background:none;padding:11px 0;font-size:.88rem}
+.searchbox input:focus{outline:none}
+.searchbox .clr{color:var(--mut);cursor:pointer;font-size:.8rem;padding:4px;visibility:hidden}
+.searchbox.has .clr{visibility:visible}
+.yearhdr.fold{cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px}
+.yearhdr .cnt{margin-left:auto;font-weight:400;color:var(--mut);letter-spacing:0}
 .subgrp{font-size:.73rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:14px 0 4px;font-weight:700}
 </style>
 </head>
 <body>
-<header><img src="logo-64.png" alt="Volantia" style="width:34px;height:34px;flex-shrink:0"><h1>VOLANT<span>IA</span></h1><span class="tag" id="hdrTag"></span><span class="ver" id="hdrVer"></span></header>
+<header><img src="logo-64.png" alt="Volantia" style="width:34px;height:34px;flex-shrink:0"><h1>VOLANT<span>IA</span></h1><span class="tag" id="hdrTag"></span><span class="ver" id="hdrSync" style="display:none" title="Cloud sync"></span><span class="ver" id="hdrVer"></span></header>
 <main>
 
 <section id="view-dash" class="view active">
@@ -187,12 +203,14 @@ label{font-size:.72rem;color:var(--mut);text-transform:uppercase;letter-spacing:
   <div class="card"><h2>Top airlines</h2><p class="sub2">Airlines you've flown the most</p><div id="topAirlines"></div></div>
   <div class="card"><h2>Cabin & aircraft</h2><p class="sub2">What you flew in, and on what</p><div id="miscStats"></div></div>
   <div class="card"><h2>Airports</h2><p class="sub2">Every airport you've passed through — tap one for its flights</p><div id="airportStats"></div></div>
+  <div class="searchbox"><span>🔍</span><input id="flightSearch" placeholder="Search country, airport, flight number, airline, aircraft…" autocomplete="off"><span class="clr" id="flightSearchX">✕</span></div>
   <div class="chips" id="yearChips"></div>
   <div class="card"><h2 id="flightListTitle">Flights</h2><div id="flightList"></div></div>
 </section>
 
 <section id="view-trips" class="view">
   <button class="btn" id="btnAddTrip" style="margin-bottom:14px">＋ Add trip</button>
+  <div class="searchbox"><span>🔍</span><input id="tripSearch" placeholder="Search country, city, note, year…" autocomplete="off"><span class="clr" id="tripSearchX">✕</span></div>
   <div class="chips">
     <span class="chip on" data-tf="all">All</span>
     <span class="chip" data-tf="visit">Visits</span>
@@ -204,6 +222,20 @@ label{font-size:.72rem;color:var(--mut);text-transform:uppercase;letter-spacing:
 
 <section id="view-data" class="view">
   <div class="card"><h2>Your data</h2><div id="dataInfo"></div></div>
+  <div class="card stack"><h2>Cloud sync</h2>
+    <p class="sub2">Keeps every device in sync through a private, encrypted GitHub gist. Change phones and all you need is your token.</p>
+    <div id="syncStatus"></div>
+    <div id="syncSetup" class="stack">
+      <div><label>GitHub token (scope: gist)</label><input id="syncToken" type="password" placeholder="ghp_… or github_pat_…" autocomplete="off"></div>
+      <button class="btn" id="btnSyncConnect">Connect cloud sync</button>
+      <p class="note">Create one at <b>github.com/settings/tokens</b> → Generate new token (classic) → tick only <b>gist</b> → Generate → copy. Your data is encrypted with a key derived from the token before it leaves the device, so nobody with the gist link can read it. <b>Keep the token safe — regenerating it makes the cloud copy unreadable</b> (your devices keep their own copy, and reconnecting re-uploads from there).</p>
+    </div>
+    <div id="syncOn" class="stack" style="display:none">
+      <button class="btn ghost" id="btnSyncNow">↻ Sync now</button>
+      <button class="btn danger" id="btnSyncOff">Disconnect this device</button>
+      <button class="btn ghost" id="btnSyncForce" style="display:none">⚠ Overwrite cloud with this device</button>
+    </div>
+  </div>
   <div class="card stack"><h2>Import / Export</h2>
     <input type="file" id="fileImport" accept=".json" hidden>
     <button class="btn" id="btnImport">Import data (seed or backup)</button>
@@ -226,19 +258,29 @@ label{font-size:.72rem;color:var(--mut);text-transform:uppercase;letter-spacing:
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
 <script>
 "use strict";
-const APP_VERSION = "1.2.1";
+const APP_VERSION = "1.5.0";
 const KEY = "volantia_v1";
 const $ = s => document.querySelector(s);
 let S = null, yearFilter = "all", tripFilter = "all", mapMode = "countries", world = null, yearSort = "year-asc";
 let mapZoom = 1, panX = 0, panY = 0;   // big map viewport
+let flightQuery = "", tripQuery = "", collapsedYears = new Set();
 // yearSort: "year-asc" | "year-desc" | "count-desc" | "count-asc" (table-header pattern)
 let routeGeom = [];   // for click detection {x1,y1,mx,my,x2,y2,a,b}
 let mapDims = {};     // canvas -> {w,h}
 
 /* ---------- state ---------- */
-function load(){ try{ S = JSON.parse(localStorage.getItem(KEY)); }catch(e){ S = null; } }
-function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
-function blank(){ return {app:"volantia", version:1, countries:[], trips:[], flights:[], airports:{}}; }
+function load(){
+  try{ S = JSON.parse(localStorage.getItem(KEY)); }catch(e){ S = null; }
+  if(S){ S.del = S.del || {}; S.updatedAt = S.updatedAt || 0; S.sync = S.sync || null; }
+}
+function persist(){ localStorage.setItem(KEY, JSON.stringify(S)); }   // no stamp, no push
+function save(){                                                        // genuine user change
+  S.updatedAt = Date.now();
+  persist();
+  schedulePush();
+}
+function blank(){ return {app:"volantia", version:1, countries:[], trips:[], flights:[], airports:{},
+  del:{}, updatedAt:0, sync:null}; }
 
 /* ---------- utils ---------- */
 const fmt = n => (n==null?"—":n.toLocaleString("en"));
@@ -265,7 +307,7 @@ function flagCode(code){
 function flagImg(code, big){
   const c = flagCode(code);
   if(!c) return `<span class="fl" style="width:22px;text-align:center">🌐</span>`;
-  return `<img class="fl${big?" big":""}" src="https://flagcdn.com/w40/${c}.png" srcset="https://flagcdn.com/w80/${c}.png 2x" alt="${c}" loading="lazy">`;
+  return `<img class="fl${big?" big":""}" src="https://flagcdn.com/w40/${c}.png" srcset="https://flagcdn.com/w80/${c}.png 2x" alt="${c}" loading="lazy" onerror="this.outerHTML='<span class=\'fl\' style=\'display:inline-block;text-align:center\'>🌐</span>'">`;
 }
 const TR_EMOJI = {plane:"✈️",train:"🚆",bus:"🚌",car:"🚗",boat:"⛴️",scooter:"🛵",motorbike:"🏍️",walk:"🚶",bike:"🚲"};
 function trIcons(list){ return (list||[]).map(t=>TR_EMOJI[t]||t).join(" "); }
@@ -291,6 +333,33 @@ function continentOf(code){
   const c2 = (code||"").slice(0,2).toUpperCase();
   for(const [k,v] of Object.entries(CONT)) if(v.includes(c2)) return k;
   return null;
+}
+
+/* ---------- search ---------- */
+function isoNames(){
+  const m = {};
+  S.countries.forEach(c=>{ const k = flagCode(c.code).slice(0,2).toUpperCase(); if(k && !m[k]) m[k] = c.name; });
+  return m;
+}
+let _iso = null;
+function flightBlob(f){
+  if(f._blob) return f._blob;
+  _iso = _iso || isoNames();
+  const parts = [f.date, f.flightNumber, f.airline.name, f.airline.iata, f.airline.icao,
+                 f.aircraft.name, f.aircraft.icao, f.registration, f.cabin, f.note, f.reason];
+  [f.from, f.to].forEach(a=>{
+    parts.push(a.icao, a.iata, a.city, a.name);
+    const ap = airportOf(a.icao);
+    if(ap){ parts.push(ap.city, ap.name, ap.country, _iso[ap.country]); }
+  });
+  return (f._blob = parts.filter(Boolean).join(" ").toLowerCase());
+}
+function tripBlob(t){
+  return [t.country, t.note, t.start, t.end, t.status, (t.transport||[]).join(" ")]
+    .filter(Boolean).join(" ").toLowerCase();
+}
+function matches(blob, q){
+  return q.split(/\s+/).filter(Boolean).every(term => blob.includes(term));
 }
 
 /* ---------- derived stats ---------- */
@@ -382,10 +451,28 @@ function renderDash(){
     c.title = mine ? "Click to flip direction" : "Sort by "+(c.dataset.ys==="year"?"year":"number of flights");
   });
   $("#dashYears").innerHTML = ys.map(([y,v])=>
-    `<div class="bar"><span class="lbl" style="color:var(--mut)">${y}</span><span class="trk"><span class="fil" style="width:${v/max*100}%"></span></span><span class="val">${v} <small>${v===1?"flight":"flights"}</small></span></div>`).join("");
+    `<div class="bar" data-yr="${y}" style="cursor:pointer"><span class="lbl" style="color:var(--mut)">${y}</span><span class="trk"><span class="fil" style="width:${v/max*100}%"></span></span><span class="val">${v} <small>${v===1?"flight":"flights"}</small></span></div>`).join("");
+  document.querySelectorAll("#dashYears [data-yr]").forEach(el=> el.onclick = ()=> openYearSheet(el.dataset.yr));
   $("#hdrTag").textContent = st.past.length ? `${g.been.length} countries · ${fmt(st.km)} km` : "";
   drawMap($("#miniMap"), "countries");
 }
+
+/* ---------- foldable "show all" sections ---------- */
+const expanded = new Set();
+function foldable(id, topHtml, restHtml, total){
+  if(!restHtml) return topHtml;
+  const open = expanded.has(id);
+  return topHtml +
+    `<div class="subgrp fold" data-fold="${id}" style="cursor:pointer;user-select:none">${open?"▾":"▸"} All ${total}</div>
+     <div ${open?"":'style="display:none"'}>${restHtml}</div>`;
+}
+document.addEventListener("click", e=>{
+  const h = e.target.closest?.("[data-fold]");
+  if(!h) return;
+  const id = h.dataset.fold;
+  expanded.has(id) ? expanded.delete(id) : expanded.add(id);
+  renderFlights();
+});
 
 /* ---------- render: flights ---------- */
 function flightRow(f, i){
@@ -411,22 +498,37 @@ function renderFlights(){
     <div class="kpi k2"><small>Airports</small><b>${st.airports.size}</b><div class="sub">${st.airlines.size} airlines · ${st.aircraft.size} aircraft</div></div>
     <div class="kpi k3"><small>Longest flight</small><b>${st.longest?fmt(st.longest.distanceKm)+" km":"—"}</b>
       <div class="sub">${st.longest?ap(st.longest.from)+" → "+ap(st.longest.to):""}</div></div>`;
-  const topR = Object.entries(st.routes).sort((a,b)=>b[1].n-a[1].n).slice(0,6);
-  const maxR = topR[0]?.[1].n||1;
-  $("#topRoutes").innerHTML = topR.map(([r,o])=>
-    `<div class="bar" data-ra="${o.a}" data-rb="${o.b}" style="cursor:pointer"><span class="lbl" style="min-width:110px">${r}</span><span class="trk"><span class="fil" style="width:${o.n/maxR*100}%;background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></span></span><span class="val">${o.n}<small>×</small></span></div>`).join("");
+  const allR = Object.entries(st.routes).sort((a,b)=>b[1].n-a[1].n);
+  const topR = allR.slice(0,6), maxR = topR[0]?.[1].n||1;
+  const routeBar = ([r,o])=>
+    `<div class="bar" data-ra="${o.a}" data-rb="${o.b}" style="cursor:pointer"><span class="lbl" style="min-width:110px">${r}</span><span class="trk"><span class="fil" style="width:${o.n/maxR*100}%;background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></span></span><span class="val">${o.n}<small>×</small></span></div>`;
+  const routeRow = ([r,o])=>
+    `<div class="row click" data-ra="${o.a}" data-rb="${o.b}"><span>${r}</span><span class="meta">${o.n}×</span></div>`;
+  $("#topRoutes").innerHTML = foldable("routes", topR.map(routeBar).join(""),
+    allR.slice(6).map(routeRow).join(""), allR.length);
   document.querySelectorAll("#topRoutes [data-ra]").forEach(el=> el.onclick = ()=> openRouteSheet(el.dataset.ra, el.dataset.rb));
-  const topA = Object.entries(st.airlineCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  const maxA = topA[0]?.[1]||1;
-  $("#topAirlines").innerHTML = topA.map(([a,v])=>
-    `<div class="bar" data-al="${esc(a)}" style="cursor:pointer"><span class="lbl" style="min-width:130px">${esc(a)}</span><span class="trk"><span class="fil" style="width:${v/maxA*100}%;background:linear-gradient(90deg,#f59e0b,#f97316)"></span></span><span class="val">${v}<small>×</small></span></div>`).join("");
+
+  const allA = Object.entries(st.airlineCount).sort((a,b)=>b[1]-a[1]);
+  const topA = allA.slice(0,6), maxA = topA[0]?.[1]||1;
+  const alBar = ([a,v])=>
+    `<div class="bar" data-al="${esc(a)}" style="cursor:pointer"><span class="lbl" style="min-width:130px">${esc(a)}</span><span class="trk"><span class="fil" style="width:${v/maxA*100}%;background:linear-gradient(90deg,#f59e0b,#f97316)"></span></span><span class="val">${v}<small>×</small></span></div>`;
+  const alRow = ([a,v])=>
+    `<div class="row click" data-al="${esc(a)}"><span>${esc(a)}</span><span class="meta">${v}×</span></div>`;
+  $("#topAirlines").innerHTML = foldable("airlines", topA.map(alBar).join(""),
+    allA.slice(6).map(alRow).join(""), allA.length);
   document.querySelectorAll("#topAirlines [data-al]").forEach(el=> el.onclick = ()=> openAirlineSheet(el.dataset.al));
   const cab = Object.entries(st.cabins).sort((a,b)=>b[1]-a[1]).map(([c,v])=>
     `<div class="bar"><span class="lbl">${esc(c)}</span><span class="trk"><span class="fil" style="width:${v/st.past.length*100}%;background:linear-gradient(90deg,#a78bfa,#8b5cf6)"></span></span><span class="val">${v} <small>${Math.round(v/st.past.length*100)}%</small></span></div>`).join("");
-  const maxAc = Object.values(st.acCount).sort((x,y)=>y-x)[0]||1;
-  const acs = Object.entries(st.acCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([c,v])=>
-    `<div class="bar"><span class="lbl" style="min-width:130px">${esc(c)}</span><span class="trk"><span class="fil" style="width:${v/maxAc*100}%;background:linear-gradient(90deg,#34d399,#10b981)"></span></span><span class="val">${v}<small>×</small></span></div>`).join("");
-  $("#miscStats").innerHTML = `<div class="subgrp">Cabin class</div>${cab||"<div class='empty'>No cabin data</div>"}<div class="subgrp">Top aircraft</div>${acs||"<div class='empty'>No aircraft data</div>"}`;
+  const allAc = Object.entries(st.acCount).sort((a,b)=>b[1]-a[1]);
+  const maxAc = allAc[0]?.[1]||1;
+  const acBar = ([c,v])=>
+    `<div class="bar"><span class="lbl" style="min-width:130px">${esc(c)}</span><span class="trk"><span class="fil" style="width:${v/maxAc*100}%;background:linear-gradient(90deg,#34d399,#10b981)"></span></span><span class="val">${v}<small>×</small></span></div>`;
+  const acRow = ([c,v])=> `<div class="row"><span>${esc(c)}</span><span class="meta">${v}×</span></div>`;
+  const acs = foldable("aircraft", allAc.slice(0,5).map(acBar).join(""),
+    allAc.slice(5).map(acRow).join(""), allAc.length);
+  $("#miscStats").innerHTML =
+    `<div class="subgrp">Cabin class</div>${cab||"<div class='empty'>No cabin data</div>"}
+     <div class="subgrp">Aircraft</div>${allAc.length?acs:"<div class='empty'>No aircraft data</div>"}`;
   const apCount = {};
   st.past.forEach(f=>{ apCount[f.from.icao]=(apCount[f.from.icao]||0)+1; apCount[f.to.icao]=(apCount[f.to.icao]||0)+1; });
   const apsSorted = Object.entries(apCount).sort((a,b)=>b[1]-a[1]);
@@ -442,24 +544,20 @@ function renderFlights(){
     return `<div class="row click" data-ap="${ic}">${flagImg(a.country)}<span>${a.iata||ic} — ${esc(a.city)}</span>
       <span class="meta">${v}×</span></div>`;
   }).join("");
-  $("#airportStats").innerHTML = topAp + (restAp?
-    `<div class="subgrp" id="apToggle" style="cursor:pointer;user-select:none">▸ All airports (${apsSorted.length})</div>
-     <div id="apRest" style="display:none">${restAp}</div>`:"");
-  const tg = $("#apToggle");
-  if(tg) tg.onclick = ()=>{
-    const r = $("#apRest"), open = r.style.display!=="none";
-    r.style.display = open?"none":"block";
-    tg.textContent = (open?"▸":"▾")+` All airports (${apsSorted.length})`;
-  };
+  $("#airportStats").innerHTML = foldable("airports", topAp, restAp, apsSorted.length);
   document.querySelectorAll("#airportStats [data-ap]").forEach(el=> el.onclick = ()=> openAirportSheet(el.dataset.ap));
   const years = [...new Set(S.flights.map(f=>f.date.slice(0,4)))].sort().reverse();
   $("#yearChips").innerHTML = `<span class="chip ${yearFilter==="all"?"on":""}" data-y="all">All</span>`+
     years.map(y=>`<span class="chip ${yearFilter===y?"on":""}" data-y="${y}">${y}</span>`).join("");
   document.querySelectorAll("#yearChips .chip").forEach(c=>c.onclick=()=>{ yearFilter=c.dataset.y; renderFlights(); });
-  const list = S.flights.filter(f=>yearFilter==="all"||f.date.startsWith(yearFilter))
+  const q = flightQuery.trim().toLowerCase();
+  const list = S.flights
+    .filter(f=>yearFilter==="all"||f.date.startsWith(yearFilter))
+    .filter(f=>!q || matches(flightBlob(f), q))
     .slice().sort((a,b)=>b.date.localeCompare(a.date));
-  $("#flightListTitle").textContent = `Flights (${list.length})`;
-  $("#flightList").innerHTML = list.map(flightRow).join("") || `<div class="empty">No flights. Import your seed in Data.</div>`;
+  $("#flightListTitle").textContent = q ? `Results (${list.length})` : `Flights (${list.length})`;
+  $("#flightList").innerHTML = list.map(f=>flightRow(f)).join("")
+    || `<div class="empty">${q?`Nothing matches “${esc(flightQuery)}”.`:"No flights. Import your seed in Data."}</div>`;
   document.querySelectorAll("#flightList .row, #dashUpcoming .row").forEach(r=>{
     if(r.dataset.fr) r.onclick = ()=> openRouteSheet(r.dataset.fr, r.dataset.to);
   });
@@ -516,12 +614,22 @@ function renderTrips(){
       return;
     }
   }
+  const q = tripQuery.trim().toLowerCase();
   const ts = S.trips.filter(t=>tripFilter==="all"||t.status===(tripFilter==="visit"?"visit":"lived"))
+    .filter(t=>!q || matches(tripBlob(t), q))
     .slice().sort((a,b)=>(b.start||"").localeCompare(a.start||""));
-  let curYear = "";
+  const perYear = {};
+  ts.forEach(t=>{ const y=(t.start||"????").slice(0,4); perYear[y]=(perYear[y]||0)+1; });
+  let curYear = "", hidden = false;
   ts.forEach(t=>{
     const y = (t.start||"????").slice(0,4);
-    if(y!==curYear){ html += `<div class="yearhdr">${y}</div>`; curYear = y; }
+    if(y!==curYear){
+      hidden = !q && collapsedYears.has(y);            // a search always expands
+      html += `<div class="yearhdr fold" data-year="${y}"><span>${hidden?"▸":"▾"}</span>${y}
+        <span class="cnt">${perYear[y]} trip${perYear[y]===1?"":"s"}</span></div>`;
+      curYear = y;
+    }
+    if(hidden) return;
     const idx = S.trips.indexOf(t);
     const lived = t.status==="lived";
     const dates = t.end && t.end!==t.start ? `${monthTxt(t.start)} – ${monthTxt(t.end)}` : monthTxt(t.start);
@@ -536,7 +644,13 @@ function renderTrips(){
     const w = countryGroups().want;
     if(w.length) html += `<div class="yearhdr">FUTURE VISITS</div>` + w.map(countryRow).join("");
   }
-  $("#tripList").innerHTML = html || `<div class="empty">No trips logged yet.</div>`;
+  $("#tripList").innerHTML = html ||
+    `<div class="empty">${q?`Nothing matches “${esc(tripQuery)}”.`:"No trips logged yet."}</div>`;
+  document.querySelectorAll("#tripList .yearhdr[data-year]").forEach(h=> h.onclick = ()=>{
+    const y = h.dataset.year;
+    collapsedYears.has(y) ? collapsedYears.delete(y) : collapsedYears.add(y);
+    renderTrips();
+  });
   document.querySelectorAll("#tripList .row").forEach(r=>{
     if(r.dataset.ti!==undefined) r.onclick = ()=> openTripSheet(+r.dataset.ti);
     else if(r.dataset.cc) r.onclick = ()=> openCountrySheet(r.dataset.cc);
@@ -590,7 +704,7 @@ $("#fileImport").onchange = e=>{
   });
 };
 $("#btnExport").onclick = ()=>{
-  const blob = new Blob([JSON.stringify({...S, exported:new Date().toISOString()},null,1)],{type:"application/json"});
+  const blob = new Blob([JSON.stringify({...syncedState(), exported:new Date().toISOString()},null,1)],{type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = `volantia-backup-${todayStr}.json`; a.click();
 };
@@ -601,9 +715,26 @@ $("#btnWipe").onclick = ()=>{
 };
 
 /* ---------- sheets ---------- */
-function openSheet(html){ $("#sheet").innerHTML = html; $("#modal").classList.add("open"); }
-function closeSheet(){ $("#modal").classList.remove("open"); }
-$("#modal").onclick = e=>{ if(e.target.id==="modal") closeSheet(); };
+let sheetScrollY = 0;
+function openSheet(html){
+  sheetScrollY = window.scrollY || window.pageYOffset || 0;
+  $("#sheet").innerHTML = `<button class="sheetX" data-x="cancel" aria-label="Close">✕</button>` + html;
+  $("#sheet").scrollTop = 0;
+  $("#modal").classList.add("open");
+  document.body.classList.add("locked");
+  document.body.style.top = `-${sheetScrollY}px`;
+}
+function closeSheet(){
+  if(!$("#modal").classList.contains("open")) return;
+  $("#modal").classList.remove("open");
+  document.body.classList.remove("locked");
+  document.body.style.top = "";
+  window.scrollTo(0, sheetScrollY);
+}
+// backdrop: close on tap anywhere outside the sheet (pointerdown so a drag doesn't count)
+$("#modal").addEventListener("pointerdown", e=>{ if(e.target.id==="modal") closeSheet(); });
+$("#modal").addEventListener("click", e=>{ if(e.target.id==="modal") closeSheet(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeSheet(); });
 
 function openCountrySheet(code){
   const c = S.countries.find(x=>x.code===code) || {name:code, code, status:"been"};
@@ -646,7 +777,7 @@ function openCountrySheet(code){
     ${flights.length?`<div class="subgrp">Flights</div>`+flights.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,20).map(f=>
       `<div class="row"><span class="date">${f.date}</span><span class="route">${ap(f.from)} → ${ap(f.to)}</span>
        <span class="meta">${f.distanceKm?fmt(f.distanceKm)+" km":""}</span></div>`).join(""):""}
-    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+    <div style="margin-top:12px"><button class="btn ghost" data-x="cancel">Close</button></div>`);
 }
 
 function openRouteSheet(icaoA, icaoB){
@@ -663,7 +794,7 @@ function openRouteSheet(icaoA, icaoB){
       <span><span class="route">${ap(f.from)} → ${ap(f.to)}</span><br>
       <small style="color:var(--mut)">${esc([f.airline.name,f.flightNumber,f.aircraft.name||f.aircraft.icao,f.registration].filter(Boolean).join(" · "))||"&nbsp;"}</small></span>
       <span class="meta">${durTxt(f.durationMin)}</span></div>`).join("")}
-    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+    <div style="margin-top:12px"><button class="btn ghost" data-x="cancel">Close</button></div>`);
 }
 
 function openAirportSheet(icao){
@@ -681,7 +812,7 @@ function openAirportSheet(icao){
     ${fls.slice(0,25).map(f=>`<div class="row"><span class="date">${f.date}</span>
       <span class="route">${ap(f.from)} → ${ap(f.to)}</span>
       <span class="meta">${esc(f.airline.name||f.flightNumber||"")}</span></div>`).join("")}
-    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+    <div style="margin-top:12px"><button class="btn ghost" data-x="cancel">Close</button></div>`);
 }
 
 function openAirlineSheet(name){
@@ -699,16 +830,38 @@ function openAirlineSheet(name){
       <span><span class="route">${ap(f.from)} → ${ap(f.to)}</span><br>
       <small style="color:var(--mut)">${esc([f.flightNumber,f.aircraft.name||f.aircraft.icao].filter(Boolean).join(" · "))||"&nbsp;"}</small></span>
       <span class="meta">${f.distanceKm?fmt(f.distanceKm)+" km":""}</span></div>`).join("")}
-    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+    <div style="margin-top:12px"><button class="btn ghost" data-x="cancel">Close</button></div>`);
 }
 
+function openYearSheet(y){
+  const fls = S.flights.filter(f=>f.date.startsWith(y)).sort((a,b)=>a.date.localeCompare(b.date));
+  const km = fls.reduce((t,f)=>t+(f.distanceKm||0),0);
+  const places = new Set();
+  fls.forEach(f=>{ [f.from,f.to].forEach(a=>{ const ap=airportOf(a.icao); if(ap) places.add(ap.country); }); });
+  const trips = S.trips.filter(t=>(t.start||"").startsWith(y));
+  openSheet(`<h3>✈️ ${y} <span class="badge">${fls.length} flight${fls.length===1?"":"s"}</span></h3>
+    <div class="kpis" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="kpi"><small>Distance</small><b style="font-size:1.1rem">${fmt(km)} km</b></div>
+      <div class="kpi k2"><small>Countries</small><b>${places.size}</b></div>
+      <div class="kpi k3"><small>Trips</small><b>${trips.length}</b></div>
+    </div>
+    ${fls.map(f=>flightRow(f)).join("")}
+    ${trips.length?`<div class="subgrp">Trips in ${y}</div>`+trips.map(t=>
+      `<div class="row">${flagImg(t.code)}<span><b>${esc(t.country)}</b>
+        <br><small class="tr-ico">${trIcons(t.transport)}</small>
+        <small style="color:var(--mut)"> ${monthTxt(t.start)}${t.end&&t.end!==t.start?" – "+monthTxt(t.end):""}</small>
+        ${t.note?`<br><small style="color:var(--mut)">${esc(t.note)}</small>`:""}</span></div>`).join(""):""}
+    <div style="margin-top:12px"><button class="btn ghost" data-x="cancel">Close</button></div>`);
+  document.querySelectorAll("#sheet .row[data-fr]").forEach(r=>
+    r.onclick = ()=> openRouteSheet(r.dataset.fr, r.dataset.to));
+}
 function bindSheetCountryRows(){
   document.querySelectorAll("#sheet .row[data-cc]").forEach(r=> r.onclick = ()=> openCountrySheet(r.dataset.cc));
 }
 function openCountryListSheet(title, arr){
   openSheet(`<h3>${title} <span class="badge">${arr.length}</span></h3>
     ${arr.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(countryRow).join("")||"<div class='empty'>Nothing here yet.</div>"}
-    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+    <div style="margin-top:12px"><button class="btn ghost" data-x="cancel">Close</button></div>`);
   bindSheetCountryRows();
 }
 function openContinentSheet(k){
@@ -718,7 +871,7 @@ function openContinentSheet(k){
     ${visited.length?`<div class="subgrp">Visited</div>`+visited.sort((a,b)=>a.name.localeCompare(b.name)).map(countryRow).join(""):""}
     ${want.length?`<div class="subgrp">Wishlist</div>`+want.sort((a,b)=>a.name.localeCompare(b.name)).map(countryRow).join(""):""}
     ${!mine.length?"<div class='empty'>Nothing here yet — time to plan a trip!</div>":""}
-    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+    <div style="margin-top:12px"><button class="btn ghost" data-x="cancel">Close</button></div>`);
   bindSheetCountryRows();
 }
 
@@ -783,19 +936,20 @@ document.addEventListener("click", e=>{
       from:{icao:A.icao,iata:A.iata,city:A.city,name:A.name}, to:{icao:B.icao,iata:B.iata,city:B.city,name:B.name},
       depTime:"",arrTime:"",durationMin:null,distanceKm:dist,
       aircraft:{icao:"",name:$("#nfAircraft").value.trim()},registration:"",cabin:"",
-      seat:$("#nfSeat").value.trim(),seatType:"",reason:"",note:"",sources:{manual:true}});
+      seat:$("#nfSeat").value.trim(),seatType:"",reason:"",note:"",sources:{manual:true},mts:Date.now()});
     S.flights.sort((a,b)=>a.date.localeCompare(b.date));
     save(); closeSheet(); renderAll(); return;
   }
   if(x==="saveTrip" || x==="delTrip"){
     const idx = +$("#tripForm").dataset.idx;
-    if(x==="delTrip"){ if(confirm("Delete this trip?")){ S.trips.splice(idx,1); save(); closeSheet(); renderAll(); } return; }
+    if(x==="delTrip"){ if(confirm("Delete this trip?")){ markDeleted("trips", S.trips[idx]); S.trips.splice(idx,1); save(); closeSheet(); renderAll(); } return; }
     const country = $("#ntCountry").value.trim(); if(!country){ alert("Country required"); return; }
     const known = S.countries.find(c=>c.name.toLowerCase()===country.toLowerCase());
     const t = {country, code:known?.code||"", start:$("#ntStart").value, end:$("#ntEnd").value||null,
       transport:[...document.querySelectorAll("#ntTransport .chip.on")].map(c=>c.dataset.t),
       note:$("#ntNotes").value.trim(), status:$("#ntStatus").value};
-    if(idx>=0) S.trips[idx]=t; else S.trips.push(t);
+    t.mts = Date.now();
+    if(idx>=0){ markDeleted("trips", S.trips[idx]); S.trips[idx]=t; } else S.trips.push(t);
     if(known){ if(t.status==="lived") known.status="lived"; else if(known.status==="want") known.status="been"; }
     else S.countries.push({name:country, code:"", type:"country", status:t.status==="lived"?"lived":"been"});
     save(); closeSheet(); renderAll(); return;
@@ -857,7 +1011,8 @@ const MAP_FILL = {been:"#2f7fb8", lived:"#2fa47a", want:"#4a5a7a", none:"#1d2a40
 async function drawMap(canvas, mode){
   try{ await loadWorld(); }catch(e){
     if(!canvas.dataset.warned){ canvas.dataset.warned=1;
-      canvas.parentElement.insertAdjacentHTML("beforeend","<p class='note'>Map needs internet on first load.</p>"); }
+      canvas.parentElement.insertAdjacentHTML("beforeend",
+        "<p class='note' data-mapwarn>🌐 The map needs internet the first time — everything else works offline.</p>"); }
     return;
   }
   const dpr = window.devicePixelRatio||1;
@@ -982,7 +1137,7 @@ function mapClick(e, canvas){
     (c.isoNum && String(+c.isoNum)===String(+hit.id)) || (c.code==="XK"&&hit.name==="Kosovo"));
   if(entry) openCountrySheet(entry.code);
   else openSheet(`<h3>${esc(hit.name)}</h3><p class="note">Not visited yet — add it to your wishlist from the Trips tab.</p>
-    <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+    <div style="margin-top:12px"><button class="btn ghost" data-x="cancel">Close</button></div>`);
 }
 (function bindMapGestures(){
   const cv = $("#bigMap");
@@ -1093,6 +1248,245 @@ $("#updBtn").onclick = ()=>{
 };
 $("#updX").onclick = ()=> $("#updBanner").classList.remove("show");
 
+/* ==================== CLOUD SYNC (encrypted secret gist) ====================
+   Design notes (learned the hard way in episotia — do not regress):
+   - updatedAt moves ONLY on genuine user changes (save()); background work uses persist().
+   - push GETs the gist first and merges anything newer than `seen` before PATCHing,
+     so a long-open stale tab can never clobber another device's data.
+   - the debounced push is flushed on visibilitychange-hidden and pagehide (iOS kills timers).
+   - a pull never applies an empty/unreadable cloud over a non-empty device.
+   - reads fall back to raw_url (the gist API truncates >1MB) with NO Authorization header.
+   - the payload is AES-GCM encrypted with a key derived from the token.
+============================================================================ */
+const GIST_FILE = "volantia-sync.json";
+let pushTimer = null, syncBusy = false, lastPull = 0;
+
+const enc = new TextEncoder(), dec = new TextDecoder();
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+
+async function hashStr(str){
+  const h = await crypto.subtle.digest("SHA-256", enc.encode(str));
+  return b64(h).slice(0, 24);
+}
+async function syncKey(token){
+  const raw = await crypto.subtle.digest("SHA-256", enc.encode("volantia-sync|" + token));
+  return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt","decrypt"]);
+}
+async function encryptPayload(obj, token){
+  const key = await syncKey(token), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, enc.encode(JSON.stringify(obj)));
+  return JSON.stringify({v:1, iv:b64(iv), data:b64(ct)});
+}
+async function decryptPayload(txt, token){
+  const o = JSON.parse(txt);
+  if(!o || o.v !== 1) throw new Error("unknown format");
+  const key = await syncKey(token);
+  const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:unb64(o.iv)}, key, unb64(o.data));
+  return JSON.parse(dec.decode(pt));
+}
+
+/* what travels: everything except the token itself */
+function syncedState(){
+  return {app:"volantia", version:1, updatedAt:S.updatedAt||0,
+          countries:S.countries, trips:S.trips, flights:S.flights,
+          airports:S.airports, del:S.del||{}};
+}
+
+/* ---- merge with tombstones ---- */
+const KEYS = {
+  flights: f => f.date+"|"+f.from.icao+"|"+f.to.icao+"|"+(f.flightNumber||""),
+  trips:   t => "T|"+t.country+"|"+(t.start||"")+"|"+(t.note||""),
+  countries: c => "C|"+c.name,
+};
+function markDeleted(type, obj){
+  S.del = S.del || {};
+  S.del[KEYS[type](obj)] = Date.now();
+}
+function mergeCollections(remote){
+  const out = {}, del = Object.assign({}, remote.del||{});
+  Object.entries(S.del||{}).forEach(([k,ts])=>{ del[k] = Math.max(ts, del[k]||0); });
+  const cutoff = Date.now() - 90*24*3600*1000;
+  Object.keys(del).forEach(k=>{ if(del[k] < cutoff) delete del[k]; });
+
+  for(const type of ["flights","trips","countries"]){
+    const kf = KEYS[type], map = new Map();
+    (S[type]||[]).forEach(o=> map.set(kf(o), o));
+    (remote[type]||[]).forEach(o=>{
+      const k = kf(o), mine = map.get(k);
+      if(!mine) map.set(k, o);
+      else if((o.mts||0) > (mine.mts||0)) map.set(k, o);
+    });
+    out[type] = [...map.entries()]
+      .filter(([k,o])=> !(del[k] && del[k] > (o.mts||0)))
+      .map(([,o])=>o);
+  }
+  out.flights.sort((a,b)=>a.date.localeCompare(b.date));
+  out.del = del;
+  out.airports = Object.assign({}, remote.airports||{}, S.airports||{});
+  return out;
+}
+function applyMerged(remote){
+  const m = mergeCollections(remote);
+  S.flights = m.flights; S.trips = m.trips; S.countries = m.countries;
+  S.airports = m.airports; S.del = m.del;
+}
+
+/* ---- GitHub API ---- */
+async function gh(path, opts, token){
+  const res = await fetch("https://api.github.com"+path, {...opts, headers:{
+    "Authorization":"Bearer "+token, "Accept":"application/vnd.github+json",
+    ...(opts?.headers||{})}});
+  if(!res.ok) throw new Error("GitHub "+res.status+(res.status===401?" — token invalid or missing the gist scope":""));
+  return res.json();
+}
+async function gistContent(g){
+  const f = g.files?.[GIST_FILE];
+  if(!f) return null;
+  if(!f.truncated && f.content) return f.content;
+  const r = await fetch(f.raw_url, {cache:"no-store"});
+  return r.ok ? r.text() : null;
+}
+async function findOrCreateGist(token){
+  const list = await gh("/gists?per_page=100", {}, token);
+  const found = list.find(g => g.files && g.files[GIST_FILE]);
+  if(found) return found.id;
+  const created = await gh("/gists", {method:"POST", body: JSON.stringify({
+    description:"Volantia — encrypted travel data (do not edit)", public:false,
+    files:{[GIST_FILE]:{content: await encryptPayload(syncedState(), token)}}})}, token);
+  return created.id;
+}
+
+/* ---- pull / push ---- */
+async function gistPull(quiet){
+  const sy = S.sync; if(!sy?.token || !sy.gistId) return;
+  try{
+    const g = await gh("/gists/"+sy.gistId, {}, sy.token);
+    const txt = await gistContent(g);
+    if(!txt) return gistPush();
+    let remote;
+    try{ remote = await decryptPayload(txt, sy.token); }
+    catch(e){
+      syncState("error", "cloud copy can't be decrypted with this token");
+      const b = $("#btnSyncForce"); if(b) b.style.display = "block";
+      return;
+    }
+    const empty = !(remote.flights?.length || remote.trips?.length || remote.countries?.length);
+    const mine  = (S.flights.length + S.trips.length + S.countries.length) > 0;
+    if(empty && mine) return gistPush();
+    applyMerged(remote);
+    S.sync.seen = Math.max(S.sync.seen||0, remote.updatedAt||0);
+    S.sync.seenHash = await hashStr(txt);
+    if((remote.updatedAt||0) > (S.updatedAt||0)) S.updatedAt = remote.updatedAt;
+    persist(); renderAll(); syncState("ok");
+    if((S.updatedAt||0) > (S.sync.lastPush||0)) gistPush();
+  }catch(e){ syncState(navigator.onLine===false ? "offline" : "error", e.message); }
+}
+async function gistPush(){
+  const sy = S.sync; if(!sy?.token || !sy.gistId || syncBusy) return;
+  syncBusy = true; syncState("busy");
+  try{
+    try{
+      const g = await gh("/gists/"+sy.gistId, {}, sy.token);
+      const txt = await gistContent(g);
+      if(txt && await hashStr(txt) !== sy.seenHash){   // cloud changed since we last saw it
+        const remote = await decryptPayload(txt, sy.token);
+        applyMerged(remote);
+        S.updatedAt = Math.max(S.updatedAt||0, remote.updatedAt||0);
+        S.sync.seen = Math.max(S.sync.seen||0, remote.updatedAt||0);
+        renderAll();
+      }
+    }catch(e){ /* unreadable cloud: push local anyway */ }
+    const payload = await encryptPayload(syncedState(), sy.token);
+    await gh("/gists/"+sy.gistId, {method:"PATCH", body: JSON.stringify({
+      files:{[GIST_FILE]:{content: payload}}})}, sy.token);
+    S.sync.lastPush = Date.now(); S.sync.seen = S.updatedAt||0;
+    S.sync.seenHash = await hashStr(payload);
+    persist(); syncState("ok");
+  }catch(e){ syncState(navigator.onLine===false ? "offline" : "error", e.message); }
+  finally{ syncBusy = false; }
+}
+function schedulePush(){
+  if(!S.sync?.token) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(gistPush, 1500);
+}
+function flushPush(){ if(pushTimer){ clearTimeout(pushTimer); pushTimer = null; gistPush(); } }
+
+/* ---- status UI ---- */
+function syncState(kind, msg){
+  const chip = $("#hdrSync"); if(!chip) return;
+  const on = !!S.sync?.token;
+  chip.style.display = on ? "inline-block" : "none";
+  chip.textContent = !on ? "" : kind==="busy" ? "☁︎…" : kind==="error" ? "☁︎!" : kind==="offline" ? "☁︎⃠" : "☁︎";
+  chip.style.color = kind==="error" ? "var(--bad)" : kind==="busy" ? "var(--acc2)"
+                   : kind==="offline" ? "var(--mut)" : "var(--ok)";
+  const box = $("#syncStatus");
+  if(box) box.innerHTML = !on ? "" :
+    `<div class="row"><span>Status</span><span class="meta" style="color:${kind==="error"?"var(--bad)":"var(--ok)"}">
+      ${kind==="error" ? "⚠ "+esc(msg||"error") : kind==="busy" ? "syncing…"
+        : kind==="offline" ? "offline — will sync when you're back online" : "connected"}</span></div>
+     <div class="row"><span>Last upload</span><span class="meta">${S.sync.lastPush?new Date(S.sync.lastPush).toLocaleString():"—"}</span></div>`;
+}
+function renderSyncUI(){
+  const on = !!S.sync?.token;
+  const a = $("#syncSetup"), b = $("#syncOn");
+  if(!a || !b) return;
+  a.style.display = on ? "none" : "flex";
+  b.style.display = on ? "flex" : "none";
+  syncState("ok");
+}
+$("#btnSyncConnect").onclick = async ()=>{
+  const token = $("#syncToken").value.trim();
+  if(!token) return alert("Paste a GitHub token first.");
+  $("#btnSyncConnect").textContent = "Connecting…";
+  try{
+    const gistId = await findOrCreateGist(token);
+    S.sync = {token, gistId, lastPush:0, seen:0, seenHash:""};
+    persist();
+    await gistPull();
+    $("#syncToken").value = "";
+    renderSyncUI(); renderData();
+    alert("Cloud sync is on ✓\nYour data is encrypted and stored in a private gist. On a new device, paste the same token to get everything back.");
+  }catch(e){ alert("Couldn't connect: "+e.message); }
+  $("#btnSyncConnect").textContent = "Connect cloud sync";
+};
+$("#btnSyncNow").onclick = async ()=>{ await gistPull(); await gistPush(); renderData(); };
+$("#btnSyncOff").onclick = ()=>{
+  if(!confirm("Disconnect this device? Your data stays here and in the cloud.")) return;
+  S.sync = null; persist(); renderSyncUI(); renderData();
+};
+$("#btnSyncForce").onclick = async ()=>{
+  if(!confirm("Overwrite the cloud copy with this device's data? The unreadable cloud copy is lost.")) return;
+  S.updatedAt = Date.now(); S.sync.seen = 0;
+  await gistPush(); $("#btnSyncForce").style.display = "none"; renderData();
+};
+document.addEventListener("visibilitychange", ()=>{
+  if(document.hidden){ flushPush(); return; }
+  if(S.sync?.token && Date.now()-lastPull > 60000){ lastPull = Date.now(); gistPull(true); }
+});
+window.addEventListener("pagehide", flushPush);
+window.addEventListener("offline", ()=> syncState("offline"));
+window.addEventListener("online", ()=>{
+  document.querySelectorAll("[data-mapwarn]").forEach(n=>n.remove());
+  document.querySelectorAll("canvas").forEach(c=> delete c.dataset.warned);
+  if(!world) renderMapView();
+  if(S.sync?.token){ lastPull = Date.now(); gistPull(true); flushPush(); }
+});
+
+/* ---------- search inputs ---------- */
+function wireSearch(inputId, clearId, set, rerender){
+  const inp = $(inputId), box = inp.parentElement;
+  inp.addEventListener("input", ()=>{
+    set(inp.value);
+    box.classList.toggle("has", !!inp.value);
+    rerender();
+  });
+  $(clearId).onclick = ()=>{ inp.value=""; set(""); box.classList.remove("has"); rerender(); inp.focus(); };
+}
+wireSearch("#flightSearch", "#flightSearchX", v=>{ flightQuery=v; }, renderFlights);
+wireSearch("#tripSearch",  "#tripSearchX",  v=>{ tripQuery=v;  }, renderTrips);
+
 /* ---------- nav & init ---------- */
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
@@ -1102,6 +1496,7 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
 function renderAll(){
   if(!S) S = blank();
   renderDash(); renderFlights(); renderMapView(); renderTrips(); renderData();
+  renderSyncUI();
 }
 $("#hdrVer").textContent = "v"+APP_VERSION;
 $("#hdrVer").title = "by ribz with love. And a lot of tokens.";
@@ -1113,10 +1508,11 @@ $("#hdrVer").onclick = ()=> openSheet(`
   <div class="row"><span>Flights</span><span class="meta">${S.flights.length}</span></div>
   <p style="text-align:center;margin:18px 0 6px;font-size:.82rem;line-height:1.7;color:var(--mut)">
     ✈️<br>by <b style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">ribz</b> with love.<br>And a lot of tokens.</p>
-  <div style="margin-top:12px"><button class="btn ghost" onclick="closeSheet()">Close</button></div>`);
+  <div style="margin-top:12px"><button class="btn ghost" data-x="cancel">Close</button></div>`);
 load();
 if(!S){ S = blank(); document.querySelector('nav button[data-v="data"]').click(); }
 renderAll();
+if(S.sync?.token){ lastPull = Date.now(); gistPull(true); }
 if("serviceWorker" in navigator && location.protocol.startsWith("http"))
   navigator.serviceWorker.register("sw.js");
 checkAppUpdate();
