@@ -1,29 +1,90 @@
-const CACHE = "volantia-v7";
-const SHELL = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "logo-64.png"];
+/* Volantia service worker — offline shell (cache name must change on every release) */
+const CACHE = "volantia-v17";
+const SHELL = ["./", "index.html", "manifest.webmanifest",
+  "icon-192.png", "icon-512.png", "apple-touch-icon.png", "logo-64.png"];
+const WORLD = "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json";
+// On a weak connection (airport wifi, roaming) a request can hang for a minute
+// before failing. After this long, the saved copy is shown instead and the
+// network answer, if it ever comes, only refreshes the cache for next time.
+const NET_TIMEOUT = 3500;
+
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    await c.addAll(SHELL);
+    // precache the world map so the very first offline open still draws it
+    try { const r = await fetch(WORLD, { mode: "cors" }); if (r.ok) await c.put(WORLD, r.clone()); } catch (err) {}
+    self.skipWaiting();
+  })());
 });
+
 self.addEventListener("activate", e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil((async () => {
+    // Keep the map and flags from the old cache: they never change, and copying
+    // them means an update made online still leaves a fully working offline app.
+    const keys = await caches.keys(), next = await caches.open(CACHE);
+    for (const k of keys) {
+      if (k === CACHE) continue;
+      if (k.startsWith("volantia-")) {
+        const old = await caches.open(k);
+        for (const req of await old.keys()) {
+          const h = new URL(req.url).hostname;
+          if ((h === "flagcdn.com" || h === "cdn.jsdelivr.net") && !(await next.match(req))) {
+            const r = await old.match(req); if (r) await next.put(req, r);
+          }
+        }
+      }
+      await caches.delete(k);
+    }
+    await self.clients.claim();
+  })());
 });
+
 self.addEventListener("fetch", e => {
-  const url = new URL(e.request.url);
-  // world map from CDN: cache-first (it never changes for our purposes)
+  const req = e.request;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
+
+  // third-party assets (world map, flags): cache-first, they never change
   if (url.hostname === "cdn.jsdelivr.net" || url.hostname === "flagcdn.com") {
-    e.respondWith(caches.open(CACHE).then(async c => {
-      const hit = await c.match(e.request);
+    e.respondWith((async () => {
+      const c = await caches.open(CACHE);
+      const hit = await c.match(req);
       if (hit) return hit;
-      const res = await fetch(e.request);
-      if (res.ok) c.put(e.request, res.clone());
-      return res;
-    }));
+      try {
+        const res = await fetch(req);
+        if (res.ok || res.type === "opaque") c.put(req, res.clone());
+        return res;
+      } catch (err) {
+        return Response.error();
+      }
+    })());
     return;
   }
-  // shell: network-first so updates land, cache fallback for offline
-  if (e.request.method === "GET" && url.origin === location.origin) {
-    e.respondWith(fetch(e.request).then(res => {
-      caches.open(CACHE).then(c => c.put(e.request, res.clone()));
-      return res.clone();
-    }).catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match("index.html"))));
+
+  // never cache the GitHub API (sync must always be live)
+  if (url.hostname === "api.github.com" || url.hostname === "gist.githubusercontent.com") return;
+
+  // app shell: network-first so updates land, saved copy when offline or too slow.
+  // Stored WITHOUT the query string: the update check fetches "index.html?v=<time>".
+  if (url.origin === location.origin) {
+    const key = url.origin + url.pathname;
+    e.respondWith((async () => {
+      const c = await caches.open(CACHE);
+      const fromNet = fetch(req).then(res => {
+        if (res.ok) c.put(key, res.clone());
+        return res;
+      });
+      const saved = async () => (await c.match(req, { ignoreSearch: true }))
+        || (req.mode === "navigate" ? (await c.match("./")) || (await c.match("index.html")) : null);
+      try {
+        const res = await Promise.race([fromNet, new Promise((_, rej) => setTimeout(() => rej(new Error("slow")), NET_TIMEOUT))]);
+        return res;
+      } catch (err) {
+        const hit = await saved();
+        if (hit) { fromNet.catch(() => {}); return hit; }
+        try { return await fromNet; } catch (err2) { return Response.error(); }
+      }
+    })());
   }
 });

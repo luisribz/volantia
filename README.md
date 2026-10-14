@@ -20,7 +20,7 @@ Installable as a home-screen app (PWA) and works offline after the first load.
 There is no server and no account. Everything lives in your own browser's storage on each device.
 This repo contains only the app itself — no personal travel data is published here.
 
-- **Import**: Data tab → import a Volantia JSON (built from Been / MyFlightPath / myFlightradar24 exports).
+- **Import**: Data tab → import a Volantia backup, or a flight CSV exported from myFlightradar24 or MyFlightPath.
 - **Export**: Data tab → download a full JSON backup. Do this regularly, and to move data between devices.
 
 ## Files
@@ -29,12 +29,13 @@ This repo contains only the app itself — no personal travel data is published 
 |---|---|
 | `index.html` | The entire app — HTML, CSS and JS in one file, no build step |
 | `sw.js` | Service worker: offline shell, caches map and flag data |
+| `airports.json` | Airport coordinates, loaded only when you import a flight CSV |
 | `manifest.webmanifest` | PWA config (name, colors, icons) |
 | `icon-*.png`, `apple-touch-icon.png`, `logo-64.png` | App icons |
 
 ## Shipping an update
 
-Replace `index.html` in this repo (drag onto the repo page → "Commit directly to the main branch" → Commit).
+Replace `index.html` (and `sw.js`) in this repo (drag onto the repo page → "Commit directly to the main branch" → Commit).
 Live in about a minute. The file must always end with `<!--VOLANTIA-EOF-->` — that marker is how a
 complete deploy is verified. Icons only refresh on a device when the icon *filenames* change.
 
