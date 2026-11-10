@@ -30,6 +30,7 @@ This repo contains only the app itself — no personal travel data is published 
 | `index.html` | The entire app — HTML, CSS and JS in one file, no build step |
 | `sw.js` | Service worker: offline shell, caches map and flag data |
 | `airports.json` | Airport coordinates, loaded only when you import a flight CSV |
+| `countries-110m.json` | World map geometry ([world-atlas](https://github.com/topojson/world-atlas) 2.0.2) |
 | `manifest.webmanifest` | PWA config (name, colors, icons) |
 | `icon-*.png`, `apple-touch-icon.png`, `logo-64.png` | App icons |
 

@@ -1,8 +1,8 @@
 /* Volantia service worker — offline shell (cache name must change on every release) */
-const CACHE = "volantia-v17";
+const CACHE = "volantia-v19";
 const SHELL = ["./", "index.html", "manifest.webmanifest",
   "icon-192.png", "icon-512.png", "apple-touch-icon.png", "logo-64.png"];
-const WORLD = "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json";
+const WORLD = "countries-110m.json";   // ships with the app since v1.10.0
 // On a weak connection (airport wifi, roaming) a request can hang for a minute
 // before failing. After this long, the saved copy is shown instead and the
 // network answer, if it ever comes, only refreshes the cache for next time.
@@ -13,7 +13,8 @@ self.addEventListener("install", e => {
     const c = await caches.open(CACHE);
     await c.addAll(SHELL);
     // precache the world map so the very first offline open still draws it
-    try { const r = await fetch(WORLD, { mode: "cors" }); if (r.ok) await c.put(WORLD, r.clone()); } catch (err) {}
+    // (outside SHELL on purpose: a deploy without this file must still install)
+    try { const r = await fetch(WORLD); if (r.ok) await c.put(WORLD, r.clone()); } catch (err) {}
     self.skipWaiting();
   })());
 });

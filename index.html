@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<!-- Second lock after escaping: only this page's own scripts run, and it can only talk to GitHub (sync),
+     flagcdn (flags) and jsdelivr (map fallback). The hashes are written by `node tests/csp.js`. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-52P08U19ztR518bi8CmhgkwW1oLGSCI++rZgVxhYpWs=' 'sha256-dKdlBo0dumi0yP9zxwKcY9nNMd5z6eGa+0y6Fa2QL/o=' 'sha256-6aivjV//+eg1pVV2tHGoyNIsabLGgYpOvtYa1jW9I4A='; style-src 'unsafe-inline'; img-src 'self' data: blob: https://flagcdn.com; connect-src 'self' https://api.github.com https://gist.githubusercontent.com https://cdn.jsdelivr.net; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Volantia</title>
 <meta name="description" content="Volantia — your travels and flights, in one place.">
@@ -42,6 +45,8 @@
   --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 8px 24px rgba(0,0,0,.28);
   --focus:0 0 0 2px var(--bg),0 0 0 4px var(--brand);
   --side:232px; --tab-h:62px;
+  /* Type scale: five sizes, and only these (there were fifteen). The hero number is the one exception. */
+  --fs-1:12px; --fs-2:13.5px; --fs-3:15px; --fs-4:18px; --fs-5:24px; --fs-hero:52px;
   /* v1.7.0: everything the canvas map and the chrome paint also comes from here,
      so the light theme only has to redefine tokens. */
   --hdr:rgba(10,15,26,.86); --navbg:rgba(10,15,26,.94); --fl-ring:rgba(255,255,255,.1);
@@ -70,7 +75,7 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
 body{background:var(--bg);color:var(--text);
-  font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text","Segoe UI",Roboto,sans-serif;
+  font:var(--fs-2)/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text","Segoe UI",Roboto,sans-serif;
   -webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1;min-height:100vh;
   padding-bottom:calc(var(--tab-h) + env(safe-area-inset-bottom) + 20px)}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -88,10 +93,10 @@ header.top{position:sticky;top:0;z-index:20;background:var(--hdr);backdrop-filte
   border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .brand img{width:32px;height:32px;flex-shrink:0}
-.word{font-size:17px;letter-spacing:.12em;font-weight:800;white-space:nowrap}
+.word{font-size:var(--fs-3);letter-spacing:.12em;font-weight:800;white-space:nowrap}
 .word span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.top .tag{margin-left:auto;font-size:12px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.pillbtn{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px;font-size:12px;color:var(--text-2);
+.top .tag{margin-left:auto;font-size:var(--fs-1);color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pillbtn{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px;font-size:var(--fs-1);color:var(--text-2);
   border:1px solid var(--border-2);border-radius:999px;background:var(--surface);flex-shrink:0}
 .pillbtn .ic{width:15px;height:15px}
 .pillbtn.ok{color:var(--green)} .pillbtn.busy{color:var(--amber)} .pillbtn.bad{color:var(--red)} .pillbtn.off{color:var(--text-3)}
@@ -108,7 +113,7 @@ nav#nav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;backgroun
   padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
 nav#nav .nbrand{display:none}
 nav#nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  min-height:50px;background:none;border:0;color:var(--text-3);font-size:11px;font-weight:600;border-radius:12px;margin:0 2px}
+  min-height:50px;background:none;border:0;color:var(--text-3);font-size:var(--fs-1);font-weight:600;border-radius:12px;margin:0 2px}
 nav#nav button .ic{width:22px;height:22px}
 nav#nav button[aria-current="page"]{color:var(--brand);background:var(--brand-soft)}
 main{padding:16px 16px 8px;max-width:760px;margin:0 auto}
@@ -119,12 +124,12 @@ main{padding:16px 16px 8px;max-width:760px;margin:0 auto}
 
 /* ---------- page head ---------- */
 .phead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:2px 0 16px;flex-wrap:wrap}
-.phead h1{font-size:22px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
-.phead p{color:var(--text-2);font-size:13px;margin-top:2px}
+.phead h1{font-size:var(--fs-4);font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.phead p{color:var(--text-2);font-size:var(--fs-2);margin-top:2px}
 
 /* ---------- buttons ---------- */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;
-  border-radius:var(--r);border:1px solid transparent;font-size:14px;font-weight:700;background:var(--grad);
+  border-radius:var(--r);border:1px solid transparent;font-size:var(--fs-2);font-weight:700;background:var(--grad);
   color:var(--on-brand);box-shadow:0 4px 16px rgba(56,189,248,.22)}
 .btn:hover{filter:brightness(1.07)}
 .btn .ic{width:18px;height:18px}
@@ -140,9 +145,9 @@ main{padding:16px 16px 8px;max-width:760px;margin:0 auto}
 
 /* ---------- cards ---------- */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-l);padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
-.card h2{font-size:15px;font-weight:650;display:flex;align-items:center;gap:8px}
+.card h2{font-size:var(--fs-3);font-weight:650;display:flex;align-items:center;gap:8px}
 .card h2 .ic{color:var(--brand);width:17px;height:17px}
-.card .sub2{font-size:13px;color:var(--text-2);margin:2px 0 14px}
+.card .sub2{font-size:var(--fs-2);color:var(--text-2);margin:2px 0 14px}
 .grid2{display:grid;grid-template-columns:minmax(0,1fr);gap:0 14px}
 .grid2>*{min-width:0}   /* a long flight row must shrink, not push the page sideways */
 .stack{display:flex;flex-direction:column;gap:12px}
@@ -153,13 +158,13 @@ main{padding:16px 16px 8px;max-width:760px;margin:0 auto}
   border-radius:18px;padding:20px 18px;margin-bottom:14px;box-shadow:var(--shadow)}
 .hero .mark{position:absolute;right:-18px;top:-22px;width:150px;height:150px;opacity:.09;stroke-width:1.3;transform:rotate(8deg)}
 .h-top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;position:relative}
-.h-num{font-size:52px;font-weight:800;line-height:1;letter-spacing:-.02em}
-.h-lbl{font-size:14px;line-height:1.15;opacity:.92}
-.h-pct{margin-left:auto;font-size:26px;font-weight:750;text-align:right}
-.h-pct small{font-size:12px;font-weight:500;opacity:.85;display:block}
+.h-num{font-size:var(--fs-hero);font-weight:800;line-height:1;letter-spacing:-.02em}
+.h-lbl{font-size:var(--fs-2);line-height:1.15;opacity:.92}
+.h-pct{margin-left:auto;font-size:var(--fs-5);font-weight:750;text-align:right}
+.h-pct small{font-size:var(--fs-1);font-weight:500;opacity:.85;display:block}
 .h-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;position:relative}
 .hchip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border-radius:999px;
-  padding:5px 11px;font-size:12.5px;font-weight:650}
+  padding:5px 11px;font-size:var(--fs-1);font-weight:650}
 .hchip .ic{width:15px;height:15px}
 
 /* ---------- KPI cards ---------- */
@@ -168,18 +173,18 @@ main{padding:16px 16px 8px;max-width:760px;margin:0 auto}
   box-shadow:var(--shadow);min-width:0;text-align:left;display:block;width:100%}
 .kpi[data-act]{cursor:pointer}
 .kpi[data-act]:hover{border-color:var(--border-2)}
-.kpi .lbl{display:flex;align-items:center;gap:8px;color:var(--text-2);font-size:12px;font-weight:600}
+.kpi .lbl{display:flex;align-items:center;gap:8px;color:var(--text-2);font-size:var(--fs-1);font-weight:600}
 .kpi .lbl i{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--brand-soft);color:var(--brand)}
 .kpi .lbl i .ic{width:15px;height:15px}
-.kpi b{display:block;font-size:22px;font-weight:750;margin-top:8px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kpi .sub{font-size:12.5px;color:var(--text-2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi b{display:block;font-size:var(--fs-4);font-weight:750;margin-top:8px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .sub{font-size:var(--fs-1);color:var(--text-2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kpi.amber .lbl i{background:var(--amber-soft);color:var(--amber)}
 .kpi.green .lbl i{background:var(--green-soft);color:var(--green)}
 .kpi.violet .lbl i{background:var(--violet-soft);color:var(--violet)}
 .kpis.three{grid-template-columns:repeat(3,minmax(0,1fr))}
 /* Home on a phone: two cards side by side, the next flight across the full width (no orphan). */
 @media (max-width:1023px){ .kpis.k3{grid-template-columns:1fr 1fr} .kpis.k3>:nth-child(3){grid-column:1/-1} }
-.kpis.three .kpi b{font-size:18px}
+.kpis.three .kpi b{font-size:var(--fs-4)}
 
 /* ---------- lists ---------- */
 .row{display:flex;align-items:center;gap:10px;min-height:48px;padding:9px 6px;border-bottom:1px solid var(--border)}
@@ -187,14 +192,14 @@ main{padding:16px 16px 8px;max-width:760px;margin:0 auto}
 .row[data-act]{cursor:pointer;border-radius:var(--r-s)}
 .row[data-act]:hover{background:var(--surface-2)}
 .row .grow{flex:1;min-width:0}
-.row .meta{margin-left:auto;text-align:right;color:var(--text-2);font-size:12.5px;flex-shrink:0}
+.row .meta{margin-left:auto;text-align:right;color:var(--text-2);font-size:var(--fs-1);flex-shrink:0}
 .row .t{font-weight:600}
-.row small{display:block;color:var(--text-2);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row small{display:block;color:var(--text-2);font-size:var(--fs-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fl{width:22px;height:auto;border-radius:3px;flex-shrink:0;box-shadow:0 0 0 1px var(--fl-ring);display:inline-block;vertical-align:middle}
 .fl.big{width:34px}
 .fl.none{height:16px;background:var(--surface-3);box-shadow:none;display:inline-grid;place-items:center;color:var(--text-3)}
 .fl.none .ic{width:12px;height:12px}
-.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:650;padding:2px 7px;border-radius:999px;
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-1);font-weight:650;padding:2px 7px;border-radius:999px;
   background:var(--surface-3);color:var(--text-2);white-space:nowrap;vertical-align:middle}
 .badge.future{background:var(--green-soft);color:var(--green)}
 .badge.lived{background:var(--green-soft);color:var(--green)}
@@ -205,16 +210,16 @@ main{padding:16px 16px 8px;max-width:760px;margin:0 auto}
 
 /* flight rows */
 .frow .fdate{width:56px;flex-shrink:0;line-height:1.2}
-.frow .fdate b{display:block;font-size:13px;font-weight:650}
-.frow .fdate small{color:var(--text-3);font-size:12px}
+.frow .fdate b{display:block;font-size:var(--fs-2);font-weight:650}
+.frow .fdate small{color:var(--text-3);font-size:var(--fs-1)}
 .froute{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:700;color:var(--text)}
 .froute .arr{color:var(--text-3);font-weight:500}
 .frow .fmeta{margin-left:auto;text-align:right;flex-shrink:0;line-height:1.3}
-.frow .fmeta b{display:block;color:var(--amber);font-size:13px;font-weight:650}
+.frow .fmeta b{display:block;color:var(--amber);font-size:var(--fs-2);font-weight:650}
 .frow .fmeta small{color:var(--text-3)}
 
 /* bars */
-.bar{display:grid;grid-template-columns:minmax(84px,min(32%,180px)) 1fr auto;align-items:center;gap:10px;font-size:13px;min-height:30px;padding:2px 6px;border-radius:var(--r-s)}
+.bar{display:grid;grid-template-columns:minmax(84px,min(32%,180px)) 1fr auto;align-items:center;gap:10px;font-size:var(--fs-2);min-height:30px;padding:2px 6px;border-radius:var(--r-s)}
 .bar[data-act]{cursor:pointer;min-height:36px}
 .bar[data-act]:hover{background:var(--surface-2)}
 .bar .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px;min-width:0}
@@ -229,10 +234,10 @@ main{padding:16px 16px 8px;max-width:760px;margin:0 auto}
 .fil.violet{background:var(--violet)}
 .fil.green{background:var(--green)}
 .fil.cyan{background:var(--cyan)}
-.subgrp{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin:16px 6px 6px;font-weight:700}
+.subgrp{font-size:var(--fs-1);letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin:16px 6px 6px;font-weight:700}
 .subgrp:first-child{margin-top:4px}
 .fold{display:inline-flex;align-items:center;gap:6px;min-height:40px;margin-top:6px;padding:0 10px;border:0;background:none;
-  color:var(--brand);font-size:13px;font-weight:650;border-radius:var(--r-s)}
+  color:var(--brand);font-size:var(--fs-2);font-weight:650;border-radius:var(--r-s)}
 .fold:hover{background:var(--brand-soft)}
 .fold .ic{width:16px;height:16px;transition:transform .15s}
 .fold[aria-expanded="true"] .ic{transform:rotate(90deg)}
@@ -240,11 +245,11 @@ main{padding:16px 16px 8px;max-width:760px;margin:0 auto}
 /* chips */
 .chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 13px;border-radius:999px;background:var(--surface);
-  border:1px solid var(--border-2);color:var(--text-2);font-size:13px;font-weight:600;user-select:none}
+  border:1px solid var(--border-2);color:var(--text-2);font-size:var(--fs-2);font-weight:600;user-select:none}
 .chip:hover{color:var(--text)}
 .chip[aria-pressed="true"]{background:var(--brand-soft);border-color:rgba(56,189,248,.45);color:var(--brand)}
 .chip .ic{width:15px;height:15px}
-.chips .lab{font-size:12px;color:var(--text-3);font-weight:600;margin-right:2px}
+.chips .lab{font-size:var(--fs-1);color:var(--text-3);font-weight:600;margin-right:2px}
 /* Years of the flight log: one row that slides, instead of two or three lines of chips. */
 .chips.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;-webkit-overflow-scrolling:touch}
 .chips.scroll::-webkit-scrollbar{display:none}
@@ -257,7 +262,7 @@ main{padding:16px 16px 8px;max-width:760px;margin:0 auto}
 .search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border-2);
   border-radius:var(--r);padding:0 4px 0 12px;margin-bottom:12px;color:var(--text-3)}
 .search:focus-within{border-color:var(--brand)}
-.search input{flex:1;min-width:0;border:0;background:none;height:44px;font-size:15px;color:var(--text)}
+.search input{flex:1;min-width:0;border:0;background:none;height:44px;font-size:var(--fs-3);color:var(--text)}
 .search input::placeholder{color:var(--text-3)}
 .search .clr{width:40px;height:40px;border:0;background:none;color:var(--text-2);display:grid;place-items:center;border-radius:var(--r-s);visibility:hidden}
 .search.has .clr{visibility:visible}
@@ -265,12 +270,12 @@ main{padding:16px 16px 8px;max-width:760px;margin:0 auto}
 /* trips timeline */
 .yearhdr{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;margin:14px 0 2px;padding:0 6px;border:0;
   border-bottom:1px solid var(--border-2);border-radius:0;background:none;color:var(--text);
-  font-size:15px;font-weight:750;letter-spacing:.01em;text-align:left}
+  font-size:var(--fs-3);font-weight:750;letter-spacing:.01em;text-align:left}
 .yearhdr:first-child{margin-top:0}
 .yearhdr .ic{color:var(--text-3)}
 .yearhdr .ic{width:15px;height:15px;transition:transform .15s}
 .yearhdr[aria-expanded="true"] .ic{transform:rotate(90deg)}
-.yearhdr .cnt{margin-left:auto;font-weight:500;color:var(--text-2);letter-spacing:0;font-size:12.5px}
+.yearhdr .cnt{margin-left:auto;font-weight:500;color:var(--text-2);letter-spacing:0;font-size:var(--fs-1)}
 .yearhdr.static{cursor:default}
 .tri{display:inline-flex;gap:4px;vertical-align:middle;color:var(--text-3)}
 .tri .ic{width:14px;height:14px}
@@ -282,32 +287,32 @@ canvas{width:100%;display:block;border-radius:var(--r);cursor:pointer;background
 .zbtn{width:40px;height:40px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border-2);
   color:var(--text);display:grid;place-items:center}
 .zbtn:hover{background:var(--surface-3)}
-.zbtn.txt{width:auto;padding:0 12px;font-size:13px;font-weight:600}
-#zoomLbl{font-size:12.5px;color:var(--text-2);min-width:36px}
-.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--text-2)}
+.zbtn.txt{width:auto;padding:0 12px;font-size:var(--fs-2);font-weight:600}
+#zoomLbl{font-size:var(--fs-1);color:var(--text-2);min-width:36px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:var(--fs-1);color:var(--text-2)}
 .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .legend .lg-been{background:var(--map-been)} .legend .lg-lived{background:var(--map-lived)}
 .legend .lg-want{background:var(--map-want);box-shadow:inset 0 0 0 1px var(--map-want-line)}
 .legend .lg-route{background:var(--map-route)} .legend .lg-ap{background:var(--map-airport);border-radius:50%}
-.hint{font-size:12.5px;color:var(--text-3);margin-left:auto}
+.hint{font-size:var(--fs-1);color:var(--text-3);margin-left:auto}
 
 /* forms */
-.field label{display:block;font-size:12.5px;color:var(--text-2);font-weight:600;margin-bottom:5px}
+.field label{display:block;font-size:var(--fs-1);color:var(--text-2);font-weight:600;margin-bottom:5px}
 .field .opt{color:var(--text-3);font-weight:500}
 input,select,textarea{width:100%;background:var(--surface-2);border:1px solid var(--border-2);border-radius:10px;
-  color:var(--text);padding:0 12px;min-height:44px;font-size:15px}
+  color:var(--text);padding:0 12px;min-height:44px;font-size:var(--fs-3)}
 textarea{padding:10px 12px;resize:vertical}
 input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
 input[aria-invalid="true"]{border-color:var(--red)}
 .up{text-transform:uppercase}
 .cols2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ferr{display:none;align-items:flex-start;gap:8px;background:var(--red-soft);color:var(--text);border-radius:10px;padding:10px 12px;font-size:13px}
+.ferr{display:none;align-items:flex-start;gap:8px;background:var(--red-soft);color:var(--text);border-radius:10px;padding:10px 12px;font-size:var(--fs-2)}
 .ferr.show{display:flex}
 .ferr .ic{color:var(--red);margin-top:1px}
-.note{font-size:12.5px;color:var(--text-2);line-height:1.55}
-.notice{display:flex;gap:10px;align-items:flex-start;background:var(--amber-soft);color:var(--text);border-radius:var(--r);padding:12px 14px;font-size:13px;margin-bottom:14px}
+.note{font-size:var(--fs-1);color:var(--text-2);line-height:1.55}
+.notice{display:flex;gap:10px;align-items:flex-start;background:var(--amber-soft);color:var(--text);border-radius:var(--r);padding:12px 14px;font-size:var(--fs-2);margin-bottom:14px}
 .notice .ic{color:var(--amber);margin-top:1px}
-.empty{color:var(--text-2);text-align:center;padding:26px 12px;font-size:13.5px;line-height:1.55}
+.empty{color:var(--text-2);text-align:center;padding:26px 12px;font-size:var(--fs-2);line-height:1.55}
 .empty .btn{margin-top:12px}
 
 /* sheets (dialogs) */
@@ -319,25 +324,25 @@ input[aria-invalid="true"]{border-color:var(--red)}
   -webkit-overflow-scrolling:touch;overscroll-behavior:contain;animation:up .22s ease;position:relative}
 .sheet::before{content:"";position:sticky;top:-12px;display:block;width:42px;height:4px;border-radius:3px;background:var(--border-2);margin:-12px auto 14px}
 .sheet:focus-visible{box-shadow:none}
-.sheet h3{margin:0 44px 12px 0;font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap;line-height:1.25}
+.sheet h3{margin:0 44px 12px 0;font-size:var(--fs-4);font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap;line-height:1.25}
 .sheetX{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:var(--surface-2);
   border:1px solid var(--border-2);color:var(--text);display:grid;place-items:center;z-index:2}
 .sheetX:hover{background:var(--surface-3)}
 body.locked{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 @keyframes up{from{transform:translateY(30px);opacity:.5}to{transform:none;opacity:1}}
-.dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:13.5px;margin:4px 0 8px}
+.dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:var(--fs-2);margin:4px 0 8px}
 .dl dt{color:var(--text-2)} .dl dd{text-align:right;font-weight:600;overflow-wrap:anywhere}
 
 /* toast + update banner */
 #toast{position:fixed;left:50%;bottom:calc(var(--tab-h) + env(safe-area-inset-bottom) + 14px);transform:translate(-50%,20px);
   z-index:70;display:flex;align-items:center;gap:12px;max-width:calc(100% - 32px);background:var(--surface-3);color:var(--text);
-  border:1px solid var(--border-2);border-radius:var(--r);padding:10px 10px 10px 14px;font-size:13.5px;box-shadow:0 12px 32px rgba(0,0,0,.45);
+  border:1px solid var(--border-2);border-radius:var(--r);padding:10px 10px 10px 14px;font-size:var(--fs-2);box-shadow:0 12px 32px rgba(0,0,0,.45);
   opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
 #toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 #toast.err{border-color:rgba(248,113,113,.6)}
 #toast button{border:0;background:none;color:var(--brand);font-weight:700;min-height:36px;padding:0 10px;border-radius:var(--r-s)}
 #updBanner{display:none;position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));z-index:60;
-  background:var(--grad);color:var(--on-brand);border-radius:14px;padding:8px 8px 8px 14px;font-size:14px;font-weight:700;
+  background:var(--grad);color:var(--on-brand);border-radius:14px;padding:8px 8px 8px 14px;font-size:var(--fs-2);font-weight:700;
   align-items:center;gap:10px;box-shadow:0 10px 30px rgba(56,189,248,.35);animation:up .25s ease}
 #updBanner.show{display:flex}
 #updBanner button{border:0;border-radius:10px;min-height:40px;font-weight:700}
@@ -359,13 +364,13 @@ body.locked{position:fixed;left:0;right:0;width:100%;overflow:hidden}
     border-top:0;border-right:1px solid var(--border);background:var(--surface)}
   nav#nav .nbrand{display:flex;padding:0 8px 22px}
   nav#nav button{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:12px;min-height:42px;padding:0 12px;
-    font-size:14px;font-weight:600;margin:0;color:var(--text-2)}
+    font-size:var(--fs-2);font-weight:600;margin:0;color:var(--text-2)}
   nav#nav button:hover{background:var(--surface-2);color:var(--text)}
   nav#nav button .ic{width:19px;height:19px}
   nav#nav button[aria-current="page"]{background:var(--surface-3);color:var(--text)}
   nav#nav button[aria-current="page"] .ic{color:var(--brand)}
   main{max-width:1120px;padding:28px 36px 24px}
-  .phead h1{font-size:26px}
+  .phead h1{font-size:var(--fs-5)}
   .grid2{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
   .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
   .kpis.k3{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -374,9 +379,9 @@ body.locked{position:fixed;left:0;right:0;width:100%;overflow:hidden}
   .sheet::before{display:none}
   #toast{bottom:28px;margin-left:calc(var(--side) / 2)}
   .hero{padding:26px 28px}
-  .h-num{font-size:64px}
+  :root{--fs-hero:64px}
 }
-@media (max-width:370px){ .top .tag{display:none} .kpis.three .kpi b{font-size:16px} }
+@media (max-width:370px){ .top .tag{display:none} .kpis.three .kpi b{font-size:var(--fs-3)} }
 /* ---------- v1.8.0 ---------- */
 /* Nothing may push the page sideways on a phone ("clip" keeps the sticky header working;
    overflow:hidden on body would break it). */
@@ -386,7 +391,7 @@ main{overflow-x:clip}
 header.top .brand{overflow:hidden}
 header.top .pillbtn{flex-shrink:0}
 @media (max-width:479px){ .top .tag{display:none} header.top .brand{margin-right:auto} }
-@media (max-width:399px){ .word{font-size:15px;letter-spacing:.1em} .brand img{width:28px;height:28px} }
+@media (max-width:399px){ .word{font-size:var(--fs-3);letter-spacing:.1em} .brand img{width:28px;height:28px} }
 .row .t.lived{color:var(--green)}
 /* trips: hold to reorder */
 #tripList .trow{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;transition:background .15s}
@@ -401,12 +406,52 @@ header.top .pillbtn{flex-shrink:0}
 .aclist{margin-top:6px;border:1px solid var(--border-2);border-radius:var(--r);background:var(--surface);overflow:hidden;
   box-shadow:var(--shadow)}
 .aclist[hidden]{display:none}
-.acopt{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 12px;cursor:pointer;font-size:14.5px;
+.acopt{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 12px;cursor:pointer;font-size:var(--fs-2);
   border-bottom:1px solid var(--border)}
 .acopt:last-child{border-bottom:0}
 .acopt[aria-selected="true"],.acopt:hover{background:var(--surface-2)}
 .acopt .grow{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
-.acopt .faint{font-size:12px}
+.acopt .faint{font-size:var(--fs-1)}
+/* ---------- v1.11.0 ---------- */
+/* One gradient button per screen, for the main action. A second important action is flat. */
+.btn.flat{background:var(--brand);box-shadow:none}
+small{font-size:var(--fs-1)}
+/* Delete never sits in the button row: a quiet link under it. The undo toast stays. */
+.dellink{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:44px;margin-top:6px;border:0;background:none;
+  color:var(--red);font-size:var(--fs-2);font-weight:600;border-radius:var(--r-s)}
+.dellink:hover{background:var(--red-soft)}
+.dellink .ic{width:15px;height:15px}
+/* Flight log: distance is plain text; amber marks the longest flight only. */
+.frow .fmeta b{color:var(--text)}
+.frow.longest .fmeta b{color:var(--amber)}
+.prow .froute .arr{color:var(--brand)}
+.pkids{margin:0 0 4px 22px;border-left:2px solid var(--border-2);padding-left:8px}
+.fswitch{margin:0 0 14px}
+/* Home: on a computer the map shares the row with what comes next. */
+.homegrid{display:flex;flex-direction:column}
+.homeside{display:contents}
+.homegrid>.mapcard{order:2} .homeside>#dashKpis{order:1} .homeside>.upcard{order:3}
+.hchip.btnchip{border:0;color:inherit;cursor:pointer;background:rgba(255,255,255,.26)}
+.hchip.btnchip:hover{background:rgba(255,255,255,.36)}
+/* Cloud sync setup: three steps */
+.steps{list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:10px}
+.steps li{counter-increment:st;display:flex;gap:10px;align-items:flex-start;font-size:var(--fs-2);line-height:1.5}
+.steps li::before{content:counter(st);flex:0 0 24px;height:24px;border-radius:50%;background:var(--brand-soft);color:var(--brand);
+  font-weight:700;display:grid;place-items:center;font-size:var(--fs-1)}
+.steps a{color:var(--brand);font-weight:650}
+.steps .field{margin-top:6px}
+.steps li>div{flex:1;min-width:0}
+@media (min-width:1024px){
+  .homegrid{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(300px,1fr);gap:0 14px;align-items:start}
+  .homeside{display:block}
+  .homegrid>.mapcard,.homeside>#dashKpis,.homeside>.upcard{order:0}
+  .homeside .kpis.k3{grid-template-columns:1fr 1fr}
+  .homeside .kpis.k3>:nth-child(3){grid-column:1/-1}
+  /* Trips: two columns inside each year, so the width is used. One column while reordering. */
+  .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+  .tgrid.single{grid-template-columns:1fr}
+  .tgrid .row:nth-last-child(2):nth-child(odd){border-bottom:0}
+}
 </style>
 </head>
 <body>
@@ -471,19 +516,23 @@ header.top .pillbtn{flex-shrink:0}
 <main>
 <section id="view-dash" class="view active" aria-label="Home">
   <div id="dashHero"></div>
-  <div class="kpis k3" id="dashKpis"></div>
-  <div class="card"><h2><svg class="ic" aria-hidden="true"><use href="#i-globe"/></svg>World map</h2>
-    <p class="sub2">Tap the map to explore countries and routes</p>
-    <canvas id="miniMap" height="300" data-act="tab" data-v="map" role="img" aria-label="World map of visited countries. Opens the Map tab."></canvas>
-    <div class="legend"><span><i class="lg-been"></i>Visited</span><span><i class="lg-lived"></i>Lived</span>
-      <span><i class="lg-want"></i>Wishlist</span></div></div>
+  <div class="homegrid">
+    <div class="card mapcard"><h2><svg class="ic" aria-hidden="true"><use href="#i-globe"/></svg>World map</h2>
+      <p class="sub2">Tap the map to explore countries and routes</p>
+      <canvas id="miniMap" height="300" data-act="tab" data-v="map" role="img" aria-label="World map of visited countries. Opens the Map tab."></canvas>
+      <div class="legend"><span><i class="lg-been"></i>Visited</span><span><i class="lg-lived"></i>Lived</span>
+        <span><i class="lg-want"></i>Wishlist</span></div></div>
+    <div class="homeside">
+      <div class="kpis k3" id="dashKpis"></div>
+      <div class="card upcard"><h2>Upcoming flights</h2><p class="sub2">Booked and future-dated flights</p><div id="dashUpcoming"></div></div>
+    </div>
+  </div>
   <div class="grid2">
     <div class="card"><h2>Continents</h2><p class="sub2">Countries visited out of each continent's total</p><div id="dashContinents"></div></div>
-    <div class="card"><h2>Upcoming flights</h2><p class="sub2">Booked and future-dated flights</p><div id="dashUpcoming"></div></div>
+    <div class="card"><h2>Flights per year</h2><p class="sub2">Flights flown each year — tap a year for the detail</p>
+      <div class="chips" id="yearSortChips" role="group" aria-label="Sort years"></div>
+      <div id="dashYears"></div></div>
   </div>
-  <div class="card"><h2>Flights per year</h2><p class="sub2">Flights flown each year — tap a year for the detail</p>
-    <div class="chips" id="yearSortChips" role="group" aria-label="Sort years"></div>
-    <div id="dashYears"></div></div>
 </section>
 
 <section id="view-map" class="view" aria-label="Map">
@@ -508,6 +557,10 @@ header.top .pillbtn{flex-shrink:0}
 <section id="view-flights" class="view" aria-label="Flights">
   <div class="phead"><div><h1>Flights</h1><p id="flightsSub"></p></div>
     <button class="btn" data-act="addFlight"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Add flight</button></div>
+  <div class="seg fswitch" role="group" aria-label="Show the log or the statistics">
+    <button class="chip" data-act="fview" data-fv="log">Log</button>
+    <button class="chip" data-act="fview" data-fv="stats">Stats</button></div>
+  <div id="flStats">
   <div class="kpis" id="flightKpis"></div>
   <div class="grid2">
     <div class="card"><h2>Top routes</h2><p class="sub2">Your most flown city pairs</p><div id="topRoutes"></div></div>
@@ -515,8 +568,9 @@ header.top .pillbtn{flex-shrink:0}
     <div class="card"><h2>Cabin &amp; aircraft</h2><p class="sub2">What you flew in, and on what</p><div id="miscStats"></div></div>
     <div class="card"><h2>Airports</h2><p class="sub2">Every airport you've passed through</p><div id="airportStats"></div></div>
   </div>
-  <div class="card">
-    <h2 id="flightListTitle">Flight log</h2><p class="sub2">Tap a flight to see it, edit it or delete it</p>
+  </div>
+  <div class="card" id="flLog">
+    <h2 id="flightListTitle">Flight log</h2><p class="sub2">Tap a flight to see it. Out and back are shown together: tap to split them.</p>
     <div class="search" id="flightSearchBox"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
       <label for="flightSearch" class="sr">Search flights</label>
       <input id="flightSearch" type="search" placeholder="Country, airport, flight number, airline…" autocomplete="off" enterkeyhint="search">
@@ -557,10 +611,15 @@ header.top .pillbtn{flex-shrink:0}
     <p class="sub2" style="margin-bottom:0">Keeps every device in sync through a private, encrypted GitHub gist. On a new phone, the token alone brings everything back.</p></div>
     <div id="syncStatus"></div>
     <div id="syncSetup" class="stack">
-      <div class="field"><label for="syncToken">GitHub token (scope: gist)</label>
-        <input id="syncToken" type="password" placeholder="ghp_… or github_pat_…" autocomplete="off" spellcheck="false"></div>
-      <button class="btn block" data-act="syncConnect" id="btnSyncConnect">Connect cloud sync</button>
-      <p class="note">Create one at <b>github.com/settings/tokens</b> → Generate new token (classic) → tick only <b>gist</b> → Generate → copy. Your data is encrypted with a key made from the token before it leaves the device, so nobody with the gist link can read it. <b>Keep the token safe — a new token can't read the old cloud copy.</b> Your devices keep their own copy, and "Overwrite cloud" re-uploads from one of them.</p>
+      <ol class="steps">
+        <li><div><a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=Volantia%20sync" target="_blank" rel="noopener">Open GitHub's new-token page</a>. It opens with the name filled in and only <b>gist</b> ticked. Choose an expiration (or none).</div></li>
+        <li><div>Scroll to the bottom, tap <b>Generate token</b> and copy it.</div></li>
+        <li><div>Paste it here and connect.
+          <div class="field"><label for="syncToken" class="sr">GitHub token</label>
+            <input id="syncToken" type="password" placeholder="ghp_… or github_pat_…" autocomplete="off" spellcheck="false"></div></div></li>
+      </ol>
+      <button class="btn flat block" data-act="syncConnect" id="btnSyncConnect">Connect cloud sync</button>
+      <p class="note">Your data is encrypted with a key made from the token before it leaves the device, so nobody with the gist link can read it. <b>Keep the token safe: a new token can't read the old cloud copy.</b> On another device, paste the same token.</p>
     </div>
     <div id="syncOn" class="stack" style="display:none">
       <button class="btn ghost block" data-act="syncNow"><svg class="ic" aria-hidden="true"><use href="#i-sync"/></svg>Sync now</button>
@@ -599,7 +658,7 @@ header.top .pillbtn{flex-shrink:0}
    A rule is written here ONCE. The UI below only calls it.
    ========================================================================== */
 "use strict";
-const APP_VERSION = "1.9.0";
+const APP_VERSION = "1.11.0";
 const KEY = "volantia_v1";
 
 /* ---------- dates ---------- */
@@ -1474,6 +1533,49 @@ function continentStats(st){
   });
   return out;
 }
+/* ---------- v1.11.0: round trips in the log, a trip's flights, what the hero shows ---------- */
+// Out and back as one row of the flight log. A pair is A→B followed by B→A within
+// 31 days; a flight is in one pair at most, and the nearest return wins.
+// Any order in; newest first out: [{one:f} | {out:f, back:g}].
+function pairFlights(list){
+  const asc = list.slice().sort((a, b) => a.date.localeCompare(b.date));
+  const used = new Set(), outOf = new Map();
+  asc.forEach((f, i) => {
+    if(used.has(f)) return;
+    const a = apId(f.from), b = apId(f.to);
+    if(!a || !b || a === b) return;
+    for(let j = i + 1; j < asc.length; j++){
+      const g = asc[j];
+      if(daysUntil(g.date, f.date) > 31) break;
+      if(used.has(g)) continue;
+      if(apId(g.from) === b && apId(g.to) === a){ used.add(f); used.add(g); outOf.set(g, f); break; }
+    }
+  });
+  const res = [];
+  list.slice().sort((x, y) => y.date.localeCompare(x.date)).forEach(f => {
+    if(outOf.has(f)) res.push({out:outOf.get(f), back:f});
+    else if(!used.has(f)) res.push({one:f});
+  });
+  return res;
+}
+// The flights that belong to a trip: they touch the trip's country and fall inside
+// its months. Nothing is stored: the link is worked out, so it can never go stale.
+function tripFlights(st, t){
+  const a = (t.start || "").slice(0, 7), b = (t.end || t.start || "").slice(0, 7);
+  if(!a) return [];
+  const c = st.countries.find(x => x.name === t.country) || {code:t.code || "", name:t.country};
+  return flightsOfCountry(st, c).filter(f => { const m = f.date.slice(0, 7); return m >= a && m <= b; })
+    .sort((x, y) => x.date.localeCompare(y.date));
+}
+// What the Home hero shows: the next flight in the two weeks before it, the year
+// in review in December, the world total the rest of the time.
+function heroMode(s, today){
+  const next = s.fut[0];
+  if(next){ const d = daysUntil(next.date, today); if(d >= 0 && d <= 14) return "next"; }
+  if(today.slice(5, 7) === "12" && s.years[today.slice(0, 4)]) return "year";
+  return "world";
+}
+
 function stats(st, today){
   const past = [], fut = [];
   st.flights.forEach(f => (f.date <= today ? past : fut).push(f));
@@ -1872,6 +1974,10 @@ let mapZoom = 1, panX = 0, panY = 0;
 let flightQuery = "", tripQuery = "";
 let alName = null, reorderKey = null;                // airline names worked out per render; trip being reordered
 const collapsedYears = new Set(), expanded = new Set();
+// Flights opens on what was used last: the log (to find a flight) or the stats.
+let flightsView = "log"; try{ if(localStorage.getItem("volantia_fview") === "stats") flightsView = "stats"; }catch(e){}
+const openPairs = new Set();          // round trips the user split open
+let longestFlight = null;             // the one amber distance in the log
 let routeGeom = [], mapDims = {};
 const AP = code => airportOf(S, code);
 const ic = (name, cls) => `<svg class="ic${cls ? " "+cls : ""}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
@@ -1952,11 +2058,27 @@ function flightRow(f, today){
     + (normCabin(f.cabin) && normCabin(f.cabin) !== "Economy" ? ` <span class="badge cab">${esc(normCabin(f.cabin))}</span>` : "");
   const sub = [AL(f), f.flightNumber, f.aircraft.name || f.aircraft.icao].filter(Boolean).join(" · ");
   const d = isDate(f.date) ? `${+f.date.slice(8,10)} ${MONTHS[+f.date.slice(5,7)-1]}` : esc(f.date);
-  return `<div class="row frow" ${act("flight", {k:KEYS.flights(f)}, ` aria-label="${esc(fmtDate(f.date)+", "+apCode(f.from)+" to "+apCode(f.to))}"`)}>
+  return `<div class="row frow${f === longestFlight ? " longest" : ""}" ${act("flight", {k:KEYS.flights(f)}, ` aria-label="${esc(fmtDate(f.date)+", "+apCode(f.from)+" to "+apCode(f.to))}"`)}>
     <span class="fdate"><b>${d}</b><small>${esc(f.date.slice(0,4))}</small></span>
     <span class="grow"><span class="froute">${A ? flagImg(A.country) : ""}${esc(apCode(f.from))}<span class="arr">→</span>${B ? flagImg(B.country) : ""}${esc(apCode(f.to))}${badges}</span>
       <small>${esc(sub) || "&nbsp;"}</small></span>
     <span class="fmeta"><b>${f.distanceKm ? fmt(f.distanceKm)+" km" : ""}</b><small>${durTxt(f.durationMin)}</small></span></div>`;
+}
+// Out and back as one row: "LIS ⇄ ATH · 25 – 30 Apr". Tap to split into the two flights.
+function pairRow(p, today){
+  const f = p.out, g = p.back, A = AP(apId(f.from)), B = AP(apId(f.to)), k = KEYS.flights(f), open = openPairs.has(k);
+  const sameMonth = f.date.slice(0,7) === g.date.slice(0,7), sameDay = f.date === g.date;
+  const span = sameDay ? `${+f.date.slice(8,10)} ${MONTHS[+f.date.slice(5,7)-1]}`
+    : sameMonth ? `${+f.date.slice(8,10)} – ${+g.date.slice(8,10)} ${MONTHS[+g.date.slice(5,7)-1]}`
+    : `${+f.date.slice(8,10)} ${MONTHS[+f.date.slice(5,7)-1]} – ${+g.date.slice(8,10)} ${MONTHS[+g.date.slice(5,7)-1]}`;
+  const als = [...new Set([AL(f), AL(g)].filter(Boolean))].join(" · ");
+  const km = (f.distanceKm || 0) + (g.distanceKm || 0);
+  const row = `<div class="row frow prow" ${act("pair", {k}, ` aria-expanded="${open}" aria-label="${esc("Round trip " + apCode(f.from) + " and " + apCode(f.to) + ", " + span + " " + g.date.slice(0,4) + ". Tap to " + (open ? "join" : "split") + ".")}"`)}>
+    <span class="fdate"><b>${+g.date.slice(8,10)} ${MONTHS[+g.date.slice(5,7)-1]}</b><small>${esc(g.date.slice(0,4))}</small></span>
+    <span class="grow"><span class="froute">${A ? flagImg(A.country) : ""}${esc(apCode(f.from))}<span class="arr">⇄</span>${B ? flagImg(B.country) : ""}${esc(apCode(f.to))}${g.date > today ? ` <span class="badge future">upcoming</span>` : ""}</span>
+      <small>${esc([span, als].filter(Boolean).join(" · "))}</small></span>
+    <span class="fmeta"><b>${km ? fmt(km) + " km" : ""}</b><small>2 flights</small></span></div>`;
+  return row + (open ? `<div class="pkids">${flightRow(g, today)}${flightRow(f, today)}</div>` : "");
 }
 function countryRow(c){
   const badge = c.status === "lived" ? `<span class="badge lived">lived</span>` :
@@ -2022,17 +2144,36 @@ function renderHeader(){
 function renderDash(){
   const today = todayISO(), st = stats(S, today), g = countryGroups(S), c = counts(S, today);
   const hasData = S.countries.length || S.flights.length;
-  $("#dashHero").innerHTML = hasData ? `
-    <div class="hero" ${act("tab", {v:"map"}, ' aria-label="Open the map"')}>
-      <svg class="ic mark" aria-hidden="true"><use href="#i-plane"/></svg>
-      <div class="h-top"><span class="h-num">${c.countries}</span><span class="h-lbl">countries<br>visited</span>
-        <span class="h-pct">${Math.round(c.countries / WORLD_COUNT * 100)}%<small>of the world</small></span></div>
-      <div class="h-chips">
+  const chips = `<div class="h-chips">
         <span class="hchip">${ic("bag")}${plural(c.trips, "trip")}</span>
         <span class="hchip">${ic("plane")}${plural(c.flown, "flight")}</span>
         <span class="hchip">${ic("ruler")}${fmt(st.km)} km</span>
-        <span class="hchip">${ic("globe")}${(st.km / 40075).toFixed(1)}× around Earth</span></div>
-    </div>` : `<div class="card empty"><b style="font-size:16px;color:var(--text)">Welcome to Volantia</b><br>
+        <span class="hchip">${ic("globe")}${(st.km / 40075).toFixed(1)}× around Earth</span>
+        <button type="button" class="hchip btnchip" data-act="share" aria-label="Share these numbers as an image">${ic("ul")}Share</button></div>`;
+  // The hero follows the moment: the next flight in the two weeks before it,
+  // the year in review in December, the world total the rest of the time.
+  const mode = heroMode(st, today), nx = st.fut[0], yr = today.slice(0, 4);
+  let hero;
+  if(mode === "next"){
+    const dd = daysUntil(nx.date, today), B = AP(apId(nx.to));
+    hero = `<div class="hero" ${act("flight", {k:KEYS.flights(nx)}, ' aria-label="Open the next flight"')}>
+      <svg class="ic mark" aria-hidden="true"><use href="#i-plane"/></svg>
+      <div class="h-top"><span class="h-num">${dd === 0 ? "Today" : dd}</span><span class="h-lbl">${dd === 0 ? "you fly" : (dd === 1 ? "day" : "days") + "<br>to take-off"}</span>
+        <span class="h-pct">${esc(apCode(nx.from))} → ${esc(apCode(nx.to))}<small>${esc(fmtDate(nx.date))}${B && B.city ? " · " + esc(B.city) : ""}</small></span></div>${chips}</div>`;
+  } else if(mode === "year"){
+    const fy = st.past.filter(f => f.date.startsWith(yr)), kmY = fy.reduce((a, f) => a + (f.distanceKm || 0), 0);
+    const cy = new Set(S.trips.filter(t => (t.start || "").startsWith(yr)).map(t => t.country)).size;
+    hero = `<div class="hero" ${act("year", {yr}, ' aria-label="Open the year"')}>
+      <svg class="ic mark" aria-hidden="true"><use href="#i-plane"/></svg>
+      <div class="h-top"><span class="h-num">${fy.length}</span><span class="h-lbl">flights<br>in ${yr}</span>
+        <span class="h-pct">${fmt(kmY)} km<small>${plural(cy, "country")} this year</small></span></div>${chips}</div>`.replace("countrys", "countries");
+  } else {
+    hero = `<div class="hero" ${act("tab", {v:"map"}, ' aria-label="Open the map"')}>
+      <svg class="ic mark" aria-hidden="true"><use href="#i-plane"/></svg>
+      <div class="h-top"><span class="h-num">${c.countries}</span><span class="h-lbl">countries<br>visited</span>
+        <span class="h-pct">${Math.round(c.countries / WORLD_COUNT * 100)}%<small>of the world</small></span></div>${chips}</div>`;
+  }
+  $("#dashHero").innerHTML = hasData ? hero : `<div class="card empty"><b style="font-size:16px;color:var(--text)">Welcome to Volantia</b><br>
       Your countries, trips and flights, in one place. Start by importing your data.<br>
       <button class="btn" data-act="tab" data-v="data">${ic("ul")}Go to Import</button></div>`;
   const next = st.fut[0];
@@ -2073,6 +2214,8 @@ function renderDash(){
 /* ---------- Flights ---------- */
 function renderFlights(){
   const today = todayISO(), st = stats(S, today);
+  document.querySelectorAll('[data-act="fview"]').forEach(b => b.setAttribute("aria-pressed", b.dataset.fv === flightsView));
+  $("#flStats").hidden = flightsView !== "stats"; $("#flLog").hidden = flightsView !== "log";
   $("#flightsSub").textContent = st.past.length ? `${plural(st.past.length, "flight")} flown · ${st.fut.length} upcoming` : "Your flight log";
   $("#flightKpis").innerHTML = `
     <div class="kpi"><span class="lbl"><i>${ic("plane")}</i>Flights</span><b>${fmt(st.past.length)}</b><div class="sub">${st.fut.length} upcoming</div></div>
@@ -2122,7 +2265,18 @@ function renderFlights(){
   const list = S.flights.filter(f => yearFilter === "all" || f.date.startsWith(yearFilter))
     .filter(f => !q || matches(flightText(f), q)).slice().sort((a, b) => b.date.localeCompare(a.date));
   $("#flightListTitle").textContent = q ? `Results (${list.length})` : `Flight log (${list.length})`;
-  $("#flightList").innerHTML = list.map(f => flightRow(f, today)).join("")
+  // Read faster: a header per year (as in Trips) and out-and-back as one row.
+  // A search shows plain flights: what was asked for must be the row you see.
+  const items = q ? list.map(f => ({one:f})) : pairFlights(list);
+  const yOf = it => (it.one || it.back).date.slice(0, 4), perY = {};
+  list.forEach(f => { const y = f.date.slice(0, 4); perY[y] = (perY[y] || 0) + 1; });
+  let fhtml = "", curY = "";
+  items.forEach(it => {
+    const y = yOf(it);
+    if(y !== curY && yearFilter === "all"){ fhtml += `<div class="yearhdr static">${esc(y)}<span class="cnt">${plural(perY[y] || 0, "flight")}</span></div>`; curY = y; }
+    fhtml += it.one ? flightRow(it.one, today) : pairRow(it, today);
+  });
+  $("#flightList").innerHTML = fhtml
     || `<div class="empty">${q ? `Nothing matches “${esc(q)}”. Try an airport code, an airline or a year.` : `No flights yet. Tap <b>Add flight</b>, or import your data in the Data tab.`}</div>`;
 }
 
@@ -2157,7 +2311,7 @@ function renderMapView(){
 /* ---------- Trips ---------- */
 function renderTrips(){
   const c = counts(S, todayISO());
-  $("#tripsSub").textContent = `${plural(c.trips, "trip")} · ${c.want} on the wishlist · hold a trip to reorder`;
+  $("#tripsSub").textContent = `${plural(c.trips, "trip")} · ${c.want} on the wishlist · tap a trip to see it, hold to reorder`;
   $("#tripChips").innerHTML = `<div class="seg">` + [["all","All"],["visit","Visits"],["lived","Lived"],["want","Wishlist"]].map(([v, l]) =>
     `<button class="chip" data-act="tf" data-tf="${v}" aria-pressed="${tripFilter === v}">${l}</button>`).join("") + `</div>`;
   const q = tripQuery.trim();
@@ -2171,19 +2325,24 @@ function renderTrips(){
     .filter(t => !q || matches(tripSearchText(t), q));
   const perYear = {};
   ts.forEach(t => { const y = (t.start || "????").slice(0,4); perYear[y] = (perYear[y] || 0) + 1; });
-  let html = "", cur = "", hidden = false;
+  let html = "", cur = "", hidden = false, open = false;
+  const close = () => { if(open){ html += "</div>"; open = false; } };
   ts.forEach(t => {
     const y = (t.start || "????").slice(0,4);
     if(y !== cur){
+      close();
       hidden = !q && collapsedYears.has(y);            // a search always opens every year
       html += `<button class="yearhdr" data-act="tyear" data-year="${esc(y)}" aria-expanded="${!hidden}">${ic("chev")}${esc(y)}<span class="cnt">${plural(perYear[y], "trip")}</span></button>`;
       cur = y;
+      if(!hidden){ const moving = reorderKey && (findTrip(reorderKey)?.start || "").slice(0,4) === y;
+        html += `<div class="tgrid${moving ? " single" : ""}">`; open = true; }
     }
     if(!hidden) html += tripRow(t, true);
   });
+  close();
   if(tripFilter === "all" && !q){
     const w = countryGroups(S).want.sort((a, b) => a.name.localeCompare(b.name));
-    if(w.length) html += `<div class="yearhdr static">FUTURE VISITS<span class="cnt">${w.length}</span></div>` + w.map(countryRow).join("");
+    if(w.length) html += `<div class="yearhdr static">FUTURE VISITS<span class="cnt">${w.length}</span></div><div class="tgrid">` + w.map(countryRow).join("") + `</div>`;
   }
   $("#tripList").innerHTML = html || `<div class="empty">${q ? `Nothing matches “${esc(q)}”. Try a country, a city or a year.` : "No trips yet. Tap <b>Add trip</b> to log one."}</div>`;
 }
@@ -2208,6 +2367,7 @@ function renderData(){
 
 function renderAll(){
   if(!S) S = blankState();
+  longestFlight = stats(S, todayISO()).longest;
   _names = null; alName = null; searchCache = new WeakMap();
   renderHeader(); renderDash(); renderFlights(); renderMapView(); renderTrips(); renderData(); renderSyncUI();
 }
@@ -2288,8 +2448,26 @@ function openFlightSheet(k){
     <dl class="dl">${dl.map(([t, v]) => `<dt>${t}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
     <div class="actions">
       <button class="btn ghost" ${act("route", {a:apId(f.from), b:apId(f.to)})}>${ic("route")}Route · ${same}×</button>
-      <button class="btn ghost" data-act="editFlight" data-k="${esc(k)}">${ic("edit")}Edit</button>
-      <button class="btn danger" data-act="delFlight" data-k="${esc(k)}">${ic("trash")}Delete</button></div>`);
+      <button class="btn" data-act="editFlight" data-k="${esc(k)}">${ic("edit")}Edit</button></div>
+    <button type="button" class="dellink" data-act="delFlight" data-k="${esc(k)}">${ic("trash")}Delete this flight</button>`);
+}
+// A trip is looked at before it is edited: a tap used to land on the form, where a slip
+// could change it. Its flights are the ones inside its months that touch its country.
+function openTripSheet(k){
+  const t = findTrip(k);
+  if(!t){ toast("That trip isn't here any more. It may have changed on another device."); return; }
+  const today = todayISO(), c = findCountry(t.country), fls = tripFlights(S, t);
+  const km = fls.reduce((a, f) => a + (f.distanceKm || 0), 0);
+  const tr = (t.transport || []).filter(x => TRANSPORT[x]);
+  const dl = [["When", monthRange(t.start, t.end)], ["Kind", t.status === "lived" ? "Lived there" : "Visit"],
+    ["Transport", tr.map(x => TRANSPORT[x]).join(", ")], ["Cities / notes", t.note]].filter(([, v]) => v);
+  openSheet(`<h3>${flagImg(t.code, true)}${esc(t.country)}${t.status === "lived" ? ' <span class="badge lived">lived</span>' : ""}</h3>
+    <dl class="dl">${dl.map(([a, v]) => `<dt>${a}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+    <div class="subgrp">Flights on this trip${fls.length ? ` (${fls.length}${km ? " · " + fmt(km) + " km" : ""})` : ""}</div>
+    ${fls.map(f => flightRow(f, today)).join("") || `<p class="note" style="margin:0 6px 8px">No flights in the log touch ${esc(t.country)} in these months.</p>`}
+    <div class="actions">
+      ${c ? `<button class="btn ghost" ${act("country", {cn:c.name})}>${ic("globe")}${esc(c.name)}</button>` : ""}
+      <button class="btn" data-act="editTrip" data-k="${esc(k)}">${ic("edit")}Edit</button></div>`);
 }
 function openRouteSheet(a, b){
   const today = todayISO();
@@ -2520,9 +2698,9 @@ function openTripForm(k, preset){
     ${field("ntNotes", "Cities / notes", `<textarea id="ntNotes" rows="2">${esc(t.note)}</textarea>`, true)}
     ${errBox}
     <div class="actions">
-      ${base ? `<button type="button" class="btn danger" data-act="delTrip" data-k="${esc(k)}">${ic("trash")}Delete</button>` : ""}
       <button type="button" class="btn ghost" data-act="close">Cancel</button>
-      <button type="submit" class="btn">${base ? "Save changes" : "Save trip"}</button></div></form>`);
+      <button type="submit" class="btn">${base ? "Save changes" : "Save trip"}</button></div>
+    ${base ? `<button type="button" class="dellink" data-act="delTrip" data-k="${esc(k)}">${ic("trash")}Delete this trip</button>` : ""}</form>`);
 }
 function saveTripForm(form){
   const k = form.dataset.k || null, base = k ? findTrip(k) : null;
@@ -2646,6 +2824,42 @@ $("#fileImport").onchange = e => {
       : "Nothing new in this file — everything was already here.");
   }).finally(() => { e.target.value = ""; });
 };
+// "15 countries · 96,179 km" as an image, in the brand gradient. Drawn on a canvas
+// here on the device; it goes to the share sheet, or is saved where there is none.
+async function shareCard(){
+  const today = todayISO(), c = counts(S, today), st = stats(S, today);
+  const W = 1200, H = 630, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const x = cv.getContext("2d"), F = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+  const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#0284c7"); g.addColorStop(.7, "#4f46e5"); g.addColorStop(1, "#6d3fe0");
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.fillStyle = "#fff"; x.textBaseline = "alphabetic";
+  x.font = "800 210px " + F; const n = String(c.countries); x.fillText(n, 76, 300);
+  const nw = x.measureText(n).width;
+  x.font = "600 46px " + F; x.globalAlpha = .92; x.fillText("countries", 76 + nw + 28, 236); x.fillText("visited", 76 + nw + 28, 292);
+  x.textAlign = "right"; x.font = "750 84px " + F; x.globalAlpha = 1; x.fillText(Math.round(c.countries / WORLD_COUNT * 100) + "%", W - 76, 250);
+  x.font = "500 34px " + F; x.globalAlpha = .85; x.fillText("of the world", W - 76, 298);
+  x.textAlign = "left"; x.globalAlpha = 1; x.font = "650 42px " + F;
+  x.fillText(`${plural(c.trips, "trip")}  ·  ${plural(c.flown, "flight")}  ·  ${fmt(st.km)} km`, 76, 420);
+  x.font = "500 36px " + F; x.globalAlpha = .9; x.fillText(`${(st.km / 40075).toFixed(1)}× around Earth`, 76, 474);
+  x.globalAlpha = 1; x.font = "800 34px " + F;
+  try{ x.letterSpacing = "6px"; }catch(e){}
+  x.fillText("VOLANTIA", 76, 566);
+  let blob = null;
+  try{ const bin = atob(cv.toDataURL("image/png").split(",")[1]), u8 = new Uint8Array(bin.length);
+       for(let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+       blob = new Blob([u8], {type:"image/png"}); }catch(e){}
+  if(!blob){ toast("Couldn't make the image on this device.", {error:true}); return; }
+  const name = `volantia-${today}.png`;
+  try{
+    const file = new File([blob], name, {type:"image/png"});
+    // The share sheet on a phone; on a computer a saved file is the useful thing.
+    const touch = window.matchMedia && matchMedia("(pointer:coarse)").matches;
+    if(touch && navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:"Volantia"}); return; }
+  }catch(e){ if(e && e.name === "AbortError") return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast("Image saved.");
+}
 function exportBackup(){
   const blob = new Blob([JSON.stringify({...syncedState(S), exported:new Date().toISOString()}, null, 1)], {type:"application/json"});
   const a = document.createElement("a");
@@ -2690,7 +2904,11 @@ document.addEventListener("click", e => {
     case "airline": openAirlineSheet(d.al); break;
     case "country": openCountrySheet(d.cn); break;
     case "clist": openCountryListSheet(d.list); break;
-    case "trip": openTripForm(d.k); break;
+    case "trip": openTripSheet(d.k); break;
+    case "editTrip": openTripForm(d.k); break;
+    case "pair": openPairs.has(d.k) ? openPairs.delete(d.k) : openPairs.add(d.k); renderFlights(); break;
+    case "fview": flightsView = d.fv === "stats" ? "stats" : "log"; try{ localStorage.setItem("volantia_fview", flightsView); }catch(e){} renderFlights(); break;
+    case "share": shareCard(); break;
     case "year": openYearSheet(d.yr); break;
     case "continent": openContinentSheet(d.ct); break;
     case "fold": expanded.has(d.fold) ? expanded.delete(d.fold) : expanded.add(d.fold); renderFlights(); break;
@@ -2705,6 +2923,10 @@ document.addEventListener("click", e => {
     case "mapmode": mapMode = d.mode; renderMapView(); break;
     case "zoom": { const {w, h} = mapSize(); if(d.zoom === "reset") resetZoom(); else zoomAt(w/2, h/2, d.zoom === "in" ? 1.5 : 1/1.5); break; }
     case "addFlight": openFlightForm(null); break;
+    case "retryMap":
+      document.querySelectorAll("[data-mapwarn]").forEach(n => n.remove());
+      document.querySelectorAll("canvas").forEach(c => delete c.dataset.warned);
+      renderAll(); break;
     case "editFlight": openFlightForm(d.k); break;
     case "delFlight": deleteFlight(d.k); break;
     case "addTrip": openTripForm(null); break;
@@ -2757,7 +2979,9 @@ function startReorder(k){
 })();
 
 /* ---------- world map (Miller projection) ---------- */
-const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json";
+// The map geometry ships with the app (countries-110m.json, next to index.html).
+// The CDN copy is only a fallback, for a deploy where that file was left out.
+const WORLD_URLS = ["countries-110m.json", "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json"];
 function decodeTopo(topo, objName){
   const t = topo.transform, arcs = topo.arcs.map(arc => {
     let x = 0, y = 0; return arc.map(([dx, dy]) => { x += dx; y += dy;
@@ -2779,7 +3003,8 @@ function decodeTopo(topo, objName){
 let worldPromise = null;
 function loadWorld(){
   if(world) return Promise.resolve(world);
-  if(!worldPromise) worldPromise = fetch(WORLD_URL).then(r => { if(!r.ok) throw new Error("map " + r.status); return r.json(); })
+  const get = u => fetch(u).then(r => { if(!r.ok) throw new Error("map " + r.status); return r.json(); });
+  if(!worldPromise) worldPromise = WORLD_URLS.reduce((p, u) => p.catch(() => get(u)), Promise.reject())
     .then(j => (world = decodeTopo(j, "countries"))).catch(e => { worldPromise = null; throw e; });
   return worldPromise;
 }
@@ -2814,10 +3039,12 @@ function mapColors(){
 }
 async function drawMap(canvas, mode){
   try{ await loadWorld(); }catch(e){
-    if(!canvas.dataset.warned){ canvas.dataset.warned = 1;
-      canvas.insertAdjacentHTML("afterend", `<p class='note' data-mapwarn style="margin-top:8px">The map needs internet the first time. Everything else works offline.</p>`); }
+    // the message takes the map's place: under an empty box it sat off screen and nobody saw it
+    if(!canvas.dataset.warned){ canvas.dataset.warned = 1; canvas.style.display = "none";
+      canvas.insertAdjacentHTML("afterend", `<p class='note' data-mapwarn style="margin:8px 0">The map couldn't load. Everything else works. <button type="button" class="btn ghost" data-act="retryMap" style="min-height:32px;padding:0 12px;margin-left:6px">Retry</button></p>`); }
     return;
   }
+  if(canvas.dataset.warned || canvas.style.display === "none"){ delete canvas.dataset.warned; canvas.style.display = ""; canvas.parentNode.querySelectorAll("[data-mapwarn]").forEach(n => n.remove()); }
   if(!canvas.clientWidth) return;                   // hidden: drawn when its tab opens
   const dpr = window.devicePixelRatio || 1;
   const w = canvas.clientWidth, h = Math.round(w*0.60);
