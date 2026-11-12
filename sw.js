@@ -1,5 +1,5 @@
 /* Volantia service worker — offline shell (cache name must change on every release) */
-const CACHE = "volantia-v19";
+const CACHE = "volantia-v20";
 const SHELL = ["./", "index.html", "manifest.webmanifest",
   "icon-192.png", "icon-512.png", "apple-touch-icon.png", "logo-64.png"];
 const WORLD = "countries-110m.json";   // ships with the app since v1.10.0

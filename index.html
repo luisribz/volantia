@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- Second lock after escaping: only this page's own scripts run, and it can only talk to GitHub (sync),
      flagcdn (flags) and jsdelivr (map fallback). The hashes are written by `node tests/csp.js`. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-52P08U19ztR518bi8CmhgkwW1oLGSCI++rZgVxhYpWs=' 'sha256-dKdlBo0dumi0yP9zxwKcY9nNMd5z6eGa+0y6Fa2QL/o=' 'sha256-6aivjV//+eg1pVV2tHGoyNIsabLGgYpOvtYa1jW9I4A='; style-src 'unsafe-inline'; img-src 'self' data: blob: https://flagcdn.com; connect-src 'self' https://api.github.com https://gist.githubusercontent.com https://cdn.jsdelivr.net; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-52P08U19ztR518bi8CmhgkwW1oLGSCI++rZgVxhYpWs=' 'sha256-eABGhNMh57FG6qZONEezf0JRO2Q8BJo5/PSpAAzDLxA=' 'sha256-6aivjV//+eg1pVV2tHGoyNIsabLGgYpOvtYa1jW9I4A='; style-src 'unsafe-inline'; img-src 'self' data: blob: https://flagcdn.com; connect-src 'self' https://api.github.com https://gist.githubusercontent.com https://cdn.jsdelivr.net; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Volantia</title>
 <meta name="description" content="Volantia — your travels and flights, in one place.">
@@ -603,7 +603,7 @@ small{font-size:var(--fs-1)}
     <button class="btn block" data-act="import"><svg class="ic" aria-hidden="true"><use href="#i-ul"/></svg>Import (backup, seed or flight CSV)</button>
     <button class="btn ghost block" data-act="export"><svg class="ic" aria-hidden="true"><use href="#i-dl"/></svg>Export backup</button>
     <p class="note"><b>Flights from another app:</b> export the CSV from myFlightradar24 (flightdiary) or MyFlightPath and import it here. You see what changes before anything is saved: new flights are added, flights already here are filled in (number, times, airline), never doubled.</p>
-    <p class="note">First time here? Import <b>data/volantia-seed.json</b>. Export a backup now and then — this device is the only copy unless cloud sync is on.</p>
+    <p class="note">First time here? Import <b>dados-pessoais/data/volantia-seed.json</b>. Export a backup now and then — this device is the only copy unless cloud sync is on.</p>
   </div>
   </div>
   <div>
@@ -658,7 +658,7 @@ small{font-size:var(--fs-1)}
    A rule is written here ONCE. The UI below only calls it.
    ========================================================================== */
 "use strict";
-const APP_VERSION = "1.11.0";
+const APP_VERSION = "1.11.2";
 const KEY = "volantia_v1";
 
 /* ---------- dates ---------- */
