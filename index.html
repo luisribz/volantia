@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- Second lock after escaping: only this page's own scripts run, and it can only talk to GitHub (sync),
      flagcdn (flags) and jsdelivr (map fallback). The hashes are written by `node tests/csp.js`. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-52P08U19ztR518bi8CmhgkwW1oLGSCI++rZgVxhYpWs=' 'sha256-eABGhNMh57FG6qZONEezf0JRO2Q8BJo5/PSpAAzDLxA=' 'sha256-6aivjV//+eg1pVV2tHGoyNIsabLGgYpOvtYa1jW9I4A='; style-src 'unsafe-inline'; img-src 'self' data: blob: https://flagcdn.com; connect-src 'self' https://api.github.com https://gist.githubusercontent.com https://cdn.jsdelivr.net; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-52P08U19ztR518bi8CmhgkwW1oLGSCI++rZgVxhYpWs=' 'sha256-RyDIaJHXQSMxt2AA84D51CJg8Zzlv7W2sT5mO+6ecxE=' 'sha256-6XTEG0Ld+4e1zdoqa9NHzzIfLTzpLTgrPSRNRsjCg8k='; style-src 'unsafe-inline'; img-src 'self' data: blob: https://flagcdn.com; connect-src 'self' https://api.github.com https://gist.githubusercontent.com https://cdn.jsdelivr.net; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Volantia</title>
 <meta name="description" content="Volantia — your travels and flights, in one place.">
@@ -658,7 +658,7 @@ small{font-size:var(--fs-1)}
    A rule is written here ONCE. The UI below only calls it.
    ========================================================================== */
 "use strict";
-const APP_VERSION = "1.11.2";
+const APP_VERSION = "1.11.3";
 const KEY = "volantia_v1";
 
 /* ---------- dates ---------- */
@@ -2634,10 +2634,11 @@ const countryPicker = (id, value, placeholder) =>
    <div class="aclist" id="${id}List" role="listbox" hidden></div></div>`;
 function renderAc(inp){
   const list = $("#" + inp.id + "List"); if(!list) return;
-  const q = inp.value.trim(), w = resolveCountry(q);
+  const q = inp.value.trim();
   const hits = q ? searchWorld(q, 7) : [];
-  const exact = w && fold(w.name) === fold(q) && hits.length && hits[0] === w;
-  if(!hits.length || exact){ list.hidden = true; inp.setAttribute("aria-expanded", "false"); return; }
+  // 17-11-2026: the list used to hide once the full name was typed ("China"), which looked like the suggestions
+  // had broken. It now stays until you pick one (click, or Enter on the highlighted one).
+  if(!hits.length){ list.hidden = true; inp.setAttribute("aria-expanded", "false"); return; }
   list.innerHTML = hits.map((x, i) => {
     const mine = S.countries.find(c => c.name === x.name);
     const tag = mine ? `<span class="badge ${mine.status === "lived" ? "lived" : mine.status === "want" ? "want" : ""}">${mine.status === "want" ? "wishlist" : mine.status === "lived" ? "lived" : "visited"}</span>`
@@ -2662,11 +2663,19 @@ document.addEventListener("focusout", e => {
   const t = e.target; if(!t.matches?.(".ac input")) return;
   setTimeout(() => { const l = $("#" + t.id + "List"); if(l && document.activeElement !== t) l.hidden = true; }, 150);
 });
+let acPickedAt = 0;
 document.addEventListener("pointerdown", e => {           // pointerdown: before the input loses focus
   const o = e.target.closest?.(".acopt"); if(!o) return;
   e.preventDefault();
+  acPickedAt = Date.now();
   pickAc(o.closest(".ac").querySelector("input"), o.dataset.name);
 });
+/* 17-11-2026: picking a suggestion hides the list, the centred sheet shrinks, and the click that follows the
+   pointerdown landed on whatever moved under the finger: Cancel or the backdrop, which closed the wishlist sheet
+   (seen with China). Swallow that one click. */
+document.addEventListener("click", e => {
+  if(acPickedAt && Date.now() - acPickedAt < 800){ acPickedAt = 0; e.preventDefault(); e.stopPropagation(); }
+}, true);
 document.addEventListener("keydown", e => {
   const inp = e.target; if(!inp.matches?.(".ac input")) return;
   const list = $("#" + inp.id + "List"); if(!list || list.hidden) return;
