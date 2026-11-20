@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- Second lock after escaping: only this page's own scripts run, and it can only talk to GitHub (sync),
      flagcdn (flags) and jsdelivr (map fallback). The hashes are written by `node tests/csp.js`. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-52P08U19ztR518bi8CmhgkwW1oLGSCI++rZgVxhYpWs=' 'sha256-RyDIaJHXQSMxt2AA84D51CJg8Zzlv7W2sT5mO+6ecxE=' 'sha256-6XTEG0Ld+4e1zdoqa9NHzzIfLTzpLTgrPSRNRsjCg8k='; style-src 'unsafe-inline'; img-src 'self' data: blob: https://flagcdn.com; connect-src 'self' https://api.github.com https://gist.githubusercontent.com https://cdn.jsdelivr.net; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-52P08U19ztR518bi8CmhgkwW1oLGSCI++rZgVxhYpWs=' 'sha256-75LDCo4p1IeziID9zJnGYRMJ6+z31Lp/m17ercwExrk=' 'sha256-wgqDRg/ZvRfLZRauRvBRXB6bzNZm9zlAEBLbNNvIkpo='; style-src 'unsafe-inline'; img-src 'self' data: blob: https://flagcdn.com; connect-src 'self' https://api.github.com https://gist.githubusercontent.com https://cdn.jsdelivr.net; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Volantia</title>
 <meta name="description" content="Volantia — your travels and flights, in one place.">
@@ -658,7 +658,7 @@ small{font-size:var(--fs-1)}
    A rule is written here ONCE. The UI below only calls it.
    ========================================================================== */
 "use strict";
-const APP_VERSION = "1.11.3";
+const APP_VERSION = "1.11.4";
 const KEY = "volantia_v1";
 
 /* ---------- dates ---------- */
@@ -2413,8 +2413,9 @@ function closeSheet(){
   window.scrollTo(0, sheetScrollY);
   if(lastFocus && document.contains(lastFocus)) lastFocus.focus({preventScroll:true});
 }
+// 20-11-2026: closes only when the press starts on the backdrop. The old "click" handler also closed it when you
+// pressed inside (selecting text by dragging) and released outside, because the browser sends that click to the backdrop.
 $("#modal").addEventListener("pointerdown", e => { if(e.target.id === "modal") closeSheet(); });
-$("#modal").addEventListener("click", e => { if(e.target.id === "modal") closeSheet(); });
 document.addEventListener("keydown", e => {
   if(e.key === "Escape" && $("#modal").classList.contains("open")){ closeSheet(); return; }
   if(e.key === "Tab" && $("#modal").classList.contains("open")){      // keep focus inside the dialog
